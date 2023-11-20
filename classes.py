@@ -2,7 +2,7 @@
 import numpy as np
 from collections import OrderedDict
 from functions import (update_surface_function,
-                       construct_rw_sparse_tensors)
+                       construct_rw_sparse_matrix)
 
 # World class
 class World:
@@ -95,12 +95,12 @@ class Surface:
         del self.degrees[vertex]
     
     # get sparse matrix T, sparse vectors v0, v1 and vertex_list (Random Walk)
-    def get_rw_sparse_tensors(self, no_pellet_pos_list, pellet_pos_list):
-        vertices, T, v0, v1 = construct_rw_sparse_tensors(self.graph, 
+    def get_rw_sparse_matrix(self, no_pellet_pos_list, pellet_pos_list):
+        index_dict, vertices, T = construct_rw_sparse_matrix(self.graph, 
                                                           no_pellet_pos_list,
                                                           pellet_pos_list 
                                                        )
-        return vertices, T, v0, v1
+        return index_dict, vertices, T
     
     # get stationary distribution (Random Walk)
     def get_rw_stationary_distribution(self):

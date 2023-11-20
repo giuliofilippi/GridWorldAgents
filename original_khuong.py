@@ -7,16 +7,14 @@ from tqdm import tqdm
 
 # classes and functions
 from classes import World
-from functions import (random_choices,
-                       random_initial_config,
-                       local_grid_data,
-                       valid_moves,
+from functions import (random_initial_config,
                        render)
 
-# khuong functions
-from functions import (prob_pickup,
-                       prob_drop,
-                       compute_height)
+# algorithms
+from algorithms import (
+    move_algorithm,
+    pickup_algorithm,
+    drop_algorithm)
 
 # initialize world and agents
 world = World(200, 200, 200, 20) # 200, 200, 200, 20
@@ -51,81 +49,42 @@ start_time = time.time()
 # loop over time steps
 for step in tqdm(range(num_steps)):
     # reset variables and generate randoms
-    x_s = np.random.rand(num_agents)
+    x_random = np.random.rand(num_agents)
     prop_on_floor = 0
     # loop over agents
     for i in range(num_agents):
         # movement rule
-        for j in range(m):
-            pos = agent_dict[i][0]
-            x,y,z = pos
-            local_data = local_grid_data(pos, world)
-            moves = valid_moves(local_data)
-            if len(moves)>0:
-                chosen_move = random_choices(moves)[0]
-                new_pos = np.array(pos)+chosen_move[1]
-                # do the step
-                world.grid[x,y,z] = 0
-                world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
-                agent_dict[i][0] = (new_pos[0], new_pos[1], new_pos[2])
+        pos = agent_dict[i][0]
+        final_pos = move_algorithm(pos, world, m)
+        x,y,z = final_pos
+        agent_dict[i][0] = (x, y, z)
 
-        # on floor check for stats
-        x,y,z = agent_dict[i][0]
+        # statistics
         if world.grid[x,y,z-1] == 1:
             prop_on_floor += 1/num_agents
 
         # pickup algorithm
         if agent_dict[i][1]==0:
             pos = agent_dict[i][0]
-            x,y,z = pos
-            # check for material
-            if world.grid[x,y,z-1] > 0:
-                v26 = local_grid_data(pos, world)
-                N = np.sum(v26==2)
-                prob = prob_pickup(N)
-                x_temp = x_s[i]
-                if x_temp < prob:
-                    # check if is 2
-                    if world.grid[x,y,z-1]==2:
-                        total_built_volume -= 1
-                    # do the pickup
-                    world.grid[x,y,z-1]=0
-                    pellet_num+=1
-                    # update pellet info
-                    agent_dict[i][1] = 1
+            material = pickup_algorithm(pos, world, x_rand=x_random[i])
+            if material is not None:
+                # make data updates
+                pellet_num += 1
+                agent_dict[i][1] = 1
+                if material == 2:
+                    total_built_volume +=1
 
         # drop algorithm
         else:
             pos = agent_dict[i][0]
-            x,y,z = pos
-            v26 = local_grid_data(pos, world)
-            moves = valid_moves(local_data)
-            # only act if there is an available move
-            if len(moves)>0:
-                N = np.sum(v26==2)
-                # slice lower bounds
-                x_low_bound, y_low_bound, z_low_bound  = max(0, x-1), max(0, y-1), max(0, z-1)
-                t_latest = np.max(world.times[x_low_bound:x+2,y_low_bound:y+2,z_low_bound:z+2])
-                t_now = step
-                h = compute_height(pos, world)
-                prob = prob_drop(N, t_now, t_latest, decay_rate, h)
-                x_temp = x_s[i]
-                if x_temp < prob:
-                    # chosen move
-                    chosen_move = random_choices(moves)[0]
-                    new_pos = np.array(pos)+chosen_move[1]
-                    # do the step
-                    world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
-                    agent_dict[i][0] = (new_pos[0], new_pos[1], new_pos[2])
-                    # update total built volume
-                    total_built_volume += 1
-                    # do the drop
-                    world.grid[x,y,z] = 2
-                    pellet_num-=1
-                    # update pellet info
-                    agent_dict[i][1] = 0
-                    # update time tensor at pos
-                    world.times[x, y, z] = t_now
+            new_pos = drop_algorithm(pos, world, step, decay_rate, x_rand = x_random[i])
+            if new_pos is not None:
+                # make data updates
+                world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
+                pellet_num -= 1
+                agent_dict[i][1] = 0
+                agent_dict[i][0] = new_pos
+                total_built_volume += 1
 
     # collect data
     if collect_data:

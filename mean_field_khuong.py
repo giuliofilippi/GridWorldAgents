@@ -9,13 +9,10 @@ from tqdm import tqdm
 from classes import World, Surface
 from functions import (get_initial_graph,
                        random_choices,
-                       local_grid_data,
                        render)
 
-# khuong functions
-from functions import (prob_pickup,
-                       prob_drop,
-                       compute_height)
+# algorithms
+from algorithms import pickup_algorithm, drop_algorithm_graph
 
 # initialize
 world = World(200, 200, 200, 20) # 200, 200, 200, 20
@@ -48,8 +45,7 @@ start_time = time.time()
 for step in tqdm(range(num_steps)):
     # reset variables and generate random values
     prop_on_floor = 0
-    new_no_pellet_num = no_pellet_num
-    random_values = np.random.random((num_agents,2))
+    random_values = np.random.random(num_agents)
     # generate random positions synchronously
     vertex_list = list(surface.graph.keys())
     p = surface.get_rw_stationary_distribution()
@@ -59,56 +55,36 @@ for step in tqdm(range(num_steps)):
         # random position
         random_pos = random_positions[i]
         x,y,z = random_pos
+
         # on floor check for stats
         if world.grid[x,y,z-1] == 1:
             prop_on_floor += 1/num_agents
+        
         # no pellet agents
         if i < no_pellet_num:
             # pickup algorithm
-            if world.grid[x,y,z-1] > 0:
-                v26 = local_grid_data(random_pos, world)
-                N = np.sum(v26==2)
-                prob = prob_pickup(N)
-                x_temp = random_values[i][1]
-                if x_temp < prob:
-                    # check if is 2
-                    if world.grid[x,y,z-1]==2:
-                        total_built_volume -= 1
-                    # do the pickup
-                    world.grid[x,y,z-1]=0
-                    # update pellet info
-                    new_no_pellet_num -= 1
-                    # update surface
-                    surface.update_surface(type='pickup', 
+            pos = random_pos
+            material = pickup_algorithm(pos, world, x_rand=random_values[i])
+            if material is not None:
+                # make data updates
+                no_pellet_num -= 1
+                if material == 2:
+                    total_built_volume +=1
+                surface.update_surface(type='pickup', 
                                             pos=random_pos, 
                                             world=world)
+
         # pellet agents
         else:
-            # drop algorithm
-            v26 = local_grid_data(random_pos, world)
-            N = np.sum(v26==2)
-            # slice lower bounds
-            x_low_bound, y_low_bound, z_low_bound  = max(0, x-1), max(0, y-1), max(0, z-1)
-            t_latest = np.max(world.times[x_low_bound:x+2,y_low_bound:y+2,z_low_bound:z+2])
-            t_now = step
-            h = compute_height(random_pos, world)
-            prob = prob_drop(N, t_now, t_latest, decay_rate, h)
-            x_temp = random_values[i][1]
-            if x_temp < prob:
-                # update total built volume
+            pos = random_pos
+            new_pos = drop_algorithm_graph(pos, world, surface.graph, step, decay_rate, x_rand = random_values[i])
+            if new_pos is not None:
+                # update data and surface
                 total_built_volume += 1
-                # do the drop
-                world.grid[x,y,z] = 2
-                # update pellet info
-                new_no_pellet_num += 1
-                # update time tensor at pos
-                world.times[x, y, z] = t_now
-                # update surface
+                no_pellet_num += 1
                 surface.update_surface(type='drop', 
                                             pos=random_pos, 
-                                            world=world)           
-    # update variables
-    no_pellet_num = new_no_pellet_num
+                                            world=world)
 
     # collect data
     if collect_data:

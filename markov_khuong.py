@@ -9,16 +9,12 @@ from tqdm import tqdm
 from classes import World, Surface
 from functions import (get_initial_graph,
                        random_choices,
-                       dual_random_choices,
-                       local_grid_data,
-                       get_neighbours,
-                       apply_matrix_to_vectors,
+                       conditional_random_choices,
+                       sparse_matrix_power,
                        render)
 
 # khuong functions
-from functions import (prob_pickup,
-                       prob_drop,
-                       compute_height)
+from algorithms import pickup_algorithm, drop_algorithm_graph
 
 # initialize world and surface
 world = World(200, 200, 200, 20) # 200, 200, 200, 20
@@ -56,94 +52,75 @@ start_time = time.time()
 for step in tqdm(range(num_steps)):
     # reset variables
     prop_on_floor = 0
-    # compute numbers
     np_num, p_num = len(np_agents), len(p_agents)
-    # generate random positions from Markov Synchronously
-    vertices, T, v0, v1 = surface.get_rw_sparse_tensors(np_agents, p_agents)
-    v0_new, v1_new = apply_matrix_to_vectors(T, m, v0, v1)
-    new_np_agents, new_p_agents = dual_random_choices(vertices, np_num, p_num, v0_new, v1_new)
-    # generate random values for later sampling
+    new_np_agents = []
+    new_p_agents = []
+    removed_indices = []
     random_values_0 = np.random.random(np_num)
     random_values_1 = np.random.random(p_num)
-    # create copies
-    new_np_agents_copy = new_np_agents.copy()
-    new_p_agents_copy = new_p_agents.copy()
+    # create transition matrix and take power
+    index_dict, vertices, T = surface.get_rw_sparse_matrix(np_agents, p_agents)
+    Tm = sparse_matrix_power(T, m)
 
     # pickup algorithm
     for i in range(np_num):
         # position
-        random_pos = new_np_agents[i]
-        x,y,z = random_pos
+        prob_dist = Tm[index_dict[np_agents[i]]].toarray().flatten()
+        random_pos = conditional_random_choices(vertices, 
+                                                size=1, 
+                                                p = prob_dist, 
+                                                removed_indices=removed_indices)[0]
+        removed_indices.append(index_dict[random_pos])
+        
         # on floor check for stats
+        x,y,z = random_pos
         if world.grid[x,y,z-1] == 1:
             prop_on_floor += 1/num_agents
-        # check for material
-        if world.grid[x,y,z-1] > 0:
-            # local data
-            v26 = local_grid_data(random_pos, world)
-            N = np.sum(v26==2)
-            prob = prob_pickup(N)
-            x_temp = random_values_0[i]
-            # random sample
-            if x_temp < prob:
-                # check if is 2
-                if world.grid[x,y,z-1]==2:
-                    total_built_volume -= 1
-                # do the pickup
-                world.grid[x,y,z-1]=0
-                # update agent lists
-                new_np_agents_copy.remove((x,y,z))
-                new_p_agents_copy.append((x,y,z))
-                # update data
-                pellet_num += 1
-                # update surface
-                surface.update_surface(type='pickup', 
-                                            pos=random_pos, 
-                                            world=world)
-                
+
+        # pickup algorithm
+        material = pickup_algorithm(random_pos, world, x_rand=random_values_0[i])
+        if material is not None:
+            # update data and surface
+            pellet_num += 1
+            new_p_agents.append((x,y,z))
+            world.grid[x,y,z] = -2
+            surface.update_surface(type='pickup', 
+                                    pos=random_pos, 
+                                    world=world)
+        else:
+            new_np_agents.append((x,y,z))
+ 
     # drop algorithm
     for j in range(p_num):
         # position
-        random_pos = new_p_agents[j]
-        x,y,z = random_pos
+        prob_dist = Tm[index_dict[p_agents[j]]].toarray().flatten()
+        random_pos = conditional_random_choices(vertices, 
+                                                size=1, 
+                                                p = prob_dist, 
+                                                removed_indices=removed_indices)[0]
+        removed_indices.append(index_dict[random_pos])
+
         # on floor check for stats
+        x, y, z = random_pos
         if world.grid[x,y,z-1] == 1:
             prop_on_floor += 1/num_agents
-        # first check for neighbours
-        nbrs = get_neighbours((x,y,z), surface.graph)
-        if len(nbrs)>0:
-            # local data
-            v26 = local_grid_data(random_pos, world)
-            N = np.sum(v26==2)
-            # slice the times tensor
-            x_low_bound, y_low_bound, z_low_bound  = max(0, x-1), max(0, y-1), max(0, z-1)
-            t_latest = np.max(world.times[x_low_bound:x+2,y_low_bound:y+2,z_low_bound:z+2])
-            t_now = step
-            # get height
-            h = compute_height(random_pos, world)
-            prob = prob_drop(N, t_now, t_latest, decay_rate, h)
-            x_temp = random_values_1[j]
-            if x_temp < prob:
-                total_built_volume+=1
-                # chosen place to move
-                chosen_nbr = random_choices(nbrs,1)[0]
-                # do the drop
-                world.grid[x,y,z] = 2
-                # update time tensor at pos
-                world.times[x, y, z] = t_now
-                # update data
-                pellet_num -= 1
-                # update agent lists
-                new_p_agents_copy.remove((x,y,z))
-                new_np_agents_copy.append(chosen_nbr)
-                # update surface
-                surface.update_surface(type='drop', 
-                                            pos=random_pos, 
-                                            world=world)
+
+        # drop algorithm
+        new_pos = drop_algorithm_graph(random_pos, world, surface.graph, step, decay_rate, x_rand = random_values_1[j])
+        if new_pos is not None:
+            # update data and surface
+            pellet_num -= 1
+            new_np_agents.append(new_pos)
+            world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
+            surface.update_surface(type='drop', 
+                                    pos=random_pos, 
+                                    world=world)
+        else:
+            new_p_agents.append((x,y,z))
 
     # reset variables for next loop
-    np_agents = new_np_agents_copy
-    p_agents = new_p_agents_copy
+    np_agents = new_np_agents
+    p_agents = new_p_agents
 
     # collect data
     if collect_data:

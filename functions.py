@@ -5,7 +5,6 @@ import numpy as np
 from mayavi import mlab
 from collections import OrderedDict
 import scipy.sparse as sp
-from scipy.stats import skewnorm
 
 # ------------ Useful Lists ----------------
 # ------------------------------------------
@@ -268,6 +267,22 @@ def random_choices(ls, size=1, p=None):
         choices = [ls[i] for i in chosen_indices]
         return choices
     
+# conditional random choices function
+def conditional_random_choices(ls, size=1, p=None, removed_indices=None):
+    # No prob dist given
+    if p is None:
+        chosen_indices = np.random.choice(range(len(ls)), size, replace=False)
+        choices = [ls[i] for i in chosen_indices]
+        return choices
+    # A prob dist is given
+    else:
+        new_p = p
+        new_p[removed_indices] = 0
+        new_p = new_p/np.sum(new_p)
+        chosen_indices = np.random.choice(range(len(ls)), size, p=new_p, replace=False)
+        choices = [ls[i] for i in chosen_indices]
+        return choices
+    
 # dual random choices function
 def dual_random_choices(ls, size0, size1, prob0, prob1=None):
     # index choices
@@ -305,20 +320,19 @@ def dual_random_choices(ls, size0, size1, prob0, prob1=None):
 # --------------------------------------------
 
 # construct sparse tensors
-def construct_rw_sparse_tensors(graph, no_pellet_pos_list, pellet_pos_list):
+def construct_rw_sparse_matrix(graph, no_pellet_pos_list, pellet_pos_list):
     # variables
     vertices = list(graph.keys())
     num_vertices = len(vertices)
-    num_pellet = len(pellet_pos_list)
     num_no_pellet = len(no_pellet_pos_list)
+    num_pellet = len(pellet_pos_list)
+    num_agents = num_no_pellet + num_pellet
     
     # build index
     index_dict = {vertex: i for i, vertex in enumerate(vertices)}
     
-    # initialize coo_matrices
+    # initialize coo_matrix
     T = sp.coo_matrix((num_vertices, num_vertices))
-    v0 = sp.coo_matrix((1, num_vertices))
-    v1 = sp.coo_matrix((1, num_vertices))
 
     # build T
     row_indices = []
@@ -327,37 +341,18 @@ def construct_rw_sparse_tensors(graph, no_pellet_pos_list, pellet_pos_list):
     for i, vertex in enumerate(vertices):
         nbrs = graph[vertex]
         num_nbrs = len(nbrs)
+        if num_nbrs == 0:
+            print (vertex)
         map_nbrs = [index_dict[v] for v in nbrs]
         row_indices.extend([i] * num_nbrs)
         col_indices.extend(map_nbrs)
         data.extend([1 / num_nbrs] * num_nbrs)
 
+    # build T
     T = sp.coo_matrix((data, (row_indices, col_indices)), shape=(num_vertices, num_vertices)).tocsr()
 
-    # build v1
-    if num_pellet == 0:
-        v1_data = []
-        v1_row_indices = []
-        v1_col_indices = []
-    else:
-        v1_data = [1 / num_pellet] * num_pellet
-        v1_row_indices = [0] * num_pellet
-        v1_col_indices = [index_dict[vertex] for vertex in pellet_pos_list]
-    v1 = sp.coo_matrix((v1_data, (v1_row_indices, v1_col_indices)), shape=(1, num_vertices)).tocsr()
-
-    # build v0
-    if num_no_pellet == 0:
-        v0_data = []
-        v0_row_indices = []
-        v0_col_indices = []
-    else:
-        v0_data = [1 / num_no_pellet] * num_no_pellet
-        v0_row_indices = [0] * num_no_pellet
-        v0_col_indices = [index_dict[vertex] for vertex in no_pellet_pos_list]
-    v0 = sp.coo_matrix((v0_data, (v0_row_indices, v0_col_indices)), shape=(1, num_vertices)).tocsr()
-
     # return
-    return vertices, T, v0, v1
+    return index_dict, vertices, T
 
 # a function that takes power of matrix through repeated squaring
 def sparse_matrix_power(A, m):
@@ -372,14 +367,9 @@ def sparse_matrix_power(A, m):
     # return
     return result
 
-# apply the matrix to both vectors
-def apply_matrix_to_vectors(T, m, v0, v1):
-    Tm = sparse_matrix_power(T, m)
-    v0_new = v0 @ Tm
-    v1_new = v1 @ Tm
-    return v0_new, v1_new
 
 # ------------ Render functions ----------------
+# ----------------------------------------------
 
 # render world and agents with mayavi
 def render(world, show=True, save=False, name="image_1.png"):
@@ -422,46 +412,3 @@ def render(world, show=True, save=False, name="image_1.png"):
     # show image
     if show:
         mlab.show()
-
-# ------------ Khuong functions ----------------
-# ----------------------------------------------
-
-# skew normal distribution cdf
-mod_list = skewnorm.cdf(x=np.array(range(200))/2, a=8.582, loc=2.866, scale=3.727)
-
-# pickup rate
-def eta_p(N):
-    # experiment params
-    n_p1 = 0.029
-    if N==0:
-        return n_p1
-    else:
-        return n_p1/N
-
-# dropping rate
-def eta_d(N):
-    # experiment params
-    n_d0 = 0.025
-    b_d = 0.11
-    if N==0:
-        return n_d0
-    else:
-        return n_d0 + b_d*N
-
-# pickup prob function
-def prob_pickup(N):
-    # see paper for formula
-    prob = 1 - np.e**(-eta_p(N))
-    return prob
-
-# drop prob function
-def prob_drop(N, t_now, t_latest, decay_rate, h):
-    # time delta
-    tau = t_now-t_latest
-    # see paper for formula
-    prob = 1 - np.e**(-eta_d(N)*np.e**(-tau*decay_rate))
-    if h>0:
-        # add vertical modulation for height h>0 in mm
-        prob = prob*mod_list[h]
-    # return
-    return prob
