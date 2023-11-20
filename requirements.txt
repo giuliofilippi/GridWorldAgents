@@ -1,0 +1,6 @@
+numpy==1.19.2
+pandas==1.1.5
+mayavi==4.8.0
+moviepy==1.0.3
+tqdm==4.64.1
+scipy==1.5.4 
