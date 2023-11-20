@@ -1,13 +1,15 @@
-# imports
+# ------------ Imports----------------------
+# ------------------------------------------
+
 import numpy as np
 from mayavi import mlab
 from collections import OrderedDict
-from scipy.stats import skewnorm
 import scipy.sparse as sp
+from scipy.stats import skewnorm
 
 # ------------ Useful Lists ----------------
+# ------------------------------------------
 
-# Lists and Dictionnaries
 translation_dict = {-2:'agent', -1:'object', 0:'void', 1:'soil',2:'pellet'}
 neighbour_directions_3d = np.array([
     [1, 0, 0],   # Right
@@ -45,7 +47,6 @@ neighbour_directions = np.array([
     [1, 0, 0], # Right
     [-1, 0, 0] # Left
 ])
-center_loc = np.array([1,1,1])
 neighbour_filter = np.array([
        [[0, 0, 0],
         [0, 1, 0],
@@ -56,8 +57,11 @@ neighbour_filter = np.array([
        [[0, 0, 0],
         [0, 1, 0],
         [0, 0, 0]]])
+center_loc = np.array([1,1,1])
+
 
 # ------------ Helper functions ----------------
+# ----------------------------------------------
 
 # random initial config
 def random_initial_config(width, lenght, soil_height, num_agents):
@@ -71,6 +75,99 @@ def random_initial_config(width, lenght, soil_height, num_agents):
     for i,pos in enumerate(random_positions):
         agent_dict[i] = [pos,0]
     return agent_dict
+
+# get local grid data from position in world
+def local_grid_data(pos, world):
+        x,y,z = pos
+        if 0<x<world.width-2 and 0<y<world.length-2 and 0<z<world.height-2:
+            # Not on any boundary -- No padding
+            local_data = world.grid[x-1:x+2,y-1:y+2,z-1:z+2]
+            return local_data
+        else:
+            # On some boundary -- Need padding
+            x_min, x_max = max(0, x - 1), min(world.width, x + 2)
+            y_min, y_max = max(0, y - 1), min(world.length, y + 2)
+            z_min, z_max = max(0, z - 1), min(world.height, z + 2)
+            # slicing start and end indices
+            x_start, x_end = 1 if x_min == 0 else 0, 2 if x_max == world.width else 3
+            y_start, y_end = 1 if y_min == 0 else 0, 2 if y_max == world.length else 3
+            z_start, z_end = 1 if z_min == 0 else 0, 2 if z_max == world.height else 3
+            # initialize with -1 then fill with available data
+            local_data = np.full((3, 3, 3), -1)
+            local_data[x_start:x_end, y_start:y_end, z_start:z_end] = world.grid[
+                x_min:x_min + x_end - x_start, y_min:y_min + y_end - y_start, z_min:z_min + z_end - z_start]
+            # return
+            return local_data
+
+# a height function that returns the number of empty cells below agent
+def compute_height(pos, world):
+    x,y,z = pos
+    max_h = world.height
+    h=0
+    for _ in range(max_h):
+        z-=1
+        cell = world.grid[x,y,z]
+        if cell > 0:
+            return h
+        h+=1
+    return max_h
+
+# returns the valid move directions from local data
+def valid_move_directions(local_data):
+    dirs = []
+    # loop over 6 neighbours
+    for dir in neighbour_directions:
+        new_pos = center_loc + dir
+        if local_data[new_pos[0], new_pos[1], new_pos[2]]==0:
+            # slice lower bounds
+            x_low_bound = max(0, new_pos[0]-1)
+            y_low_bound = max(0, new_pos[1]-1)
+            z_low_bound = max(0, new_pos[2]-1)
+            # sliced array
+            new_local_data = local_data[x_low_bound:new_pos[0]+2, y_low_bound:new_pos[1]+2, z_low_bound:new_pos[2]+2]
+            # check for any material
+            if (new_local_data>0).any():
+                dirs.append(dir)
+    return dirs
+
+# checks neighbours for some material
+def voxel_shares_face_with_material(local_data):
+    filtered = local_data*neighbour_filter
+    shares_face = (filtered > 0).any()
+    # return binary condition
+    return shares_face
+
+# list of valid actions from local data tensor
+def valid_actions(local_data, has_pellet):
+        action_list = []
+        move_directions = valid_move_directions(local_data)
+        # move
+        if len(move_directions)>0:
+            for dir in move_directions:
+                action_list.append(('move',dir)) # movements
+            # drop
+            if has_pellet is True:
+                if voxel_shares_face_with_material(local_data):
+                    ind = np.random.randint(0,len(move_directions))
+                    dir = move_directions[ind]
+                    action_list.append(('drop',dir)) # drop with random movement
+        # pickup
+        if has_pellet is False:
+            under = np.array([0,0,-1])
+            if local_data[1,1,0] in [1,2]:
+                action_list.append(('pickup',under)) # pickup
+
+        return action_list
+
+# list of valid moves from local data tensor (TODO)
+def valid_moves(local_data):
+        action_list = []
+        move_directions = valid_move_directions(local_data)
+        # moves in format
+        if len(move_directions)>0:
+            for dir in move_directions:
+                action_list.append(('move',dir)) # movements
+        return action_list
 
 # get initial surface graph
 def get_initial_graph(width, lenght, soil_height):
@@ -107,63 +204,6 @@ def get_neighbours(pos, graph):
             # if yes, append
             neighbours.append(new_pos)
     return neighbours
-
-# returns the valid move directions from local data
-def valid_move_directions(local_data):
-    dirs = []
-    # loop over 6 neighbours
-    for dir in neighbour_directions:
-        new_pos = center_loc + dir
-        if local_data[new_pos[0], new_pos[1], new_pos[2]]==0:
-            # slice lower bounds
-            x_low_bound = max(0, new_pos[0]-1)
-            y_low_bound = max(0, new_pos[1]-1)
-            z_low_bound = max(0, new_pos[2]-1)
-            # sliced array
-            new_local_data = local_data[x_low_bound:new_pos[0]+2, y_low_bound:new_pos[1]+2, z_low_bound:new_pos[2]+2]
-            # check for any material
-            if (new_local_data>0).any():
-                dirs.append(dir)
-    return dirs
-
-# checks neighbours for some material
-def voxel_shares_face_with_material(local_data):
-    filtered = local_data*neighbour_filter
-    shares_face = (filtered > 0).any()
-    # return binary condition
-    return shares_face
-
-# list of valid actions from local data tensor (TODO)
-def valid_actions(local_data, has_pellet):
-        action_list = []
-        move_directions = valid_move_directions(local_data)
-        # move
-        if len(move_directions)>0:
-            for dir in move_directions:
-                action_list.append(('move',dir)) # movements
-            # drop
-            if has_pellet is True:
-                if voxel_shares_face_with_material(local_data):
-                    ind = np.random.randint(0,len(move_directions))
-                    dir = move_directions[ind]
-                    action_list.append(('drop',dir)) # drop with random movement
-        # pickup
-        if has_pellet is False:
-            under = np.array([0,0,-1])
-            if local_data[1,1,0] in [1,2]:
-                action_list.append(('pickup',under)) # pickup
-
-        return action_list
-
-# list of valid moves from local data tensor (TODO)
-def valid_moves(local_data):
-        action_list = []
-        move_directions = valid_move_directions(local_data)
-        # moves in format
-        if len(move_directions)>0:
-            for dir in move_directions:
-                action_list.append(('move',dir)) # movements
-        return action_list
 
 # update graph
 def update_surface_function(surface, type, pos, world):
@@ -261,46 +301,11 @@ def dual_random_choices(ls, size0, size1, prob0, prob1=None):
     # return
     return choices0, choices1
 
-# get local grid data from position in world
-def local_grid_data(pos, world):
-        x,y,z = pos
-        if 0<x<world.width-2 and 0<y<world.length-2 and 0<z<world.height-2:
-            # Not on any boundary -- No padding
-            local_data = world.grid[x-1:x+2,y-1:y+2,z-1:z+2]
-            return local_data
-        else:
-            # On some boundary -- Need padding
-            x_min, x_max = max(0, x - 1), min(world.width, x + 2)
-            y_min, y_max = max(0, y - 1), min(world.length, y + 2)
-            z_min, z_max = max(0, z - 1), min(world.height, z + 2)
-            # slicing start and end indices
-            x_start, x_end = 1 if x_min == 0 else 0, 2 if x_max == world.width else 3
-            y_start, y_end = 1 if y_min == 0 else 0, 2 if y_max == world.length else 3
-            z_start, z_end = 1 if z_min == 0 else 0, 2 if z_max == world.height else 3
-            # initialize with -1 then fill with available data
-            local_data = np.full((3, 3, 3), -1)
-            local_data[x_start:x_end, y_start:y_end, z_start:z_end] = world.grid[
-                x_min:x_min + x_end - x_start, y_min:y_min + y_end - y_start, z_min:z_min + z_end - z_start]
-            # return
-            return local_data
-
-# a height function that returns the number of empty cells below agent
-def compute_height(pos, world):
-    x,y,z = pos
-    max_h = world.height
-    h=0
-    for _ in range(max_h):
-        z-=1
-        cell = world.grid[x,y,z]
-        if cell > 0:
-            return h
-        h+=1
-    return max_h
-
 # ------------ Linear Algebra ----------------
+# --------------------------------------------
 
 # construct sparse tensors
-def construct_rw_sparse_tensors(graph, pellet_pos_list, no_pellet_pos_list):
+def construct_rw_sparse_tensors(graph, no_pellet_pos_list, pellet_pos_list):
     # variables
     vertices = list(graph.keys())
     num_vertices = len(vertices)
@@ -383,10 +388,12 @@ def render(world, show=True, save=False, name="image_1.png"):
     # Define colors based on your values
     basic = {
         1: (1, 1, 1),    # Soil
-        -1: (1, 0, 0)    # Objects
+        -1: (1, 0, 0),    # Objects
+        -2:(0, 0, 1),    # Agents
+        2:(1, 0.75, 0) # Built structure
         }
     gradient ={
-        2: 'Greys',  # Pellets
+        #2: 'Greys',  # Pellets
     }
     # plotting voxels
     for value, color in basic.items():
@@ -417,6 +424,7 @@ def render(world, show=True, save=False, name="image_1.png"):
         mlab.show()
 
 # ------------ Khuong functions ----------------
+# ----------------------------------------------
 
 # skew normal distribution cdf
 mod_list = skewnorm.cdf(x=np.array(range(200))/2, a=8.582, loc=2.866, scale=3.727)

@@ -37,7 +37,7 @@ if render_images:
 
 # data storage
 pellet_proportion_list = []
-on_floor_proportion_list = []
+floor_proportion_list = []
 total_surface_area_list = []
 total_built_volume = 0
 total_built_volume_list = []
@@ -113,7 +113,7 @@ for step in tqdm(range(num_steps)):
     # collect data
     if collect_data:
         pellet_proportion_list.append((num_agents-no_pellet_num)/num_agents)
-        on_floor_proportion_list.append(prop_on_floor)
+        floor_proportion_list.append(prop_on_floor)
         total_surface_area_list.append(len(surface.graph.keys()))
         total_built_volume_list.append(total_built_volume)
 
@@ -133,7 +133,7 @@ if collect_data:
     data_dict = {
         'steps':steps,
         'proportion pellet':pellet_proportion_list,
-        'proportion on floor':on_floor_proportion_list,
+        'proportion floor':floor_proportion_list,
         'surface area':total_surface_area_list,
         'volume':total_built_volume_list
     }

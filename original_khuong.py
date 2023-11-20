@@ -28,7 +28,7 @@ for agent,item in agent_dict.items():
 # khuong params
 num_steps = 100 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
-m = 15 # 1500 num moves per agent
+m = 6 # should be 1500 num moves per agent
 lifetime = 1200 # phermone lifetime
 decay_rate = 1/lifetime # decay rate
 
@@ -78,6 +78,7 @@ for step in tqdm(range(num_steps)):
         if agent_dict[i][1]==0:
             pos = agent_dict[i][0]
             x,y,z = pos
+            # check for material
             if world.grid[x,y,z-1] > 0:
                 v26 = local_grid_data(pos, world)
                 N = np.sum(v26==2)
@@ -98,24 +99,33 @@ for step in tqdm(range(num_steps)):
             pos = agent_dict[i][0]
             x,y,z = pos
             v26 = local_grid_data(pos, world)
-            N = np.sum(v26==2)
-            # slice lower bounds
-            x_low_bound, y_low_bound, z_low_bound  = max(0, x-1), max(0, y-1), max(0, z-1)
-            t_latest = np.max(world.times[x_low_bound:x+2,y_low_bound:y+2,z_low_bound:z+2])
-            t_now = step
-            h = compute_height(pos, world)
-            prob = prob_drop(N, t_now, t_latest, decay_rate, h)
-            x_temp = x_s[i]
-            if x_temp < prob:
-                # update total built volume
-                total_built_volume += 1
-                # do the drop
-                world.grid[x,y,z] = 2
-                pellet_num-=1
-                # update pellet info
-                agent_dict[i][1] = 0
-                # update time tensor at pos
-                world.times[x, y, z] = t_now
+            moves = valid_moves(local_data)
+            # only act if there is an available move
+            if len(moves)>0:
+                N = np.sum(v26==2)
+                # slice lower bounds
+                x_low_bound, y_low_bound, z_low_bound  = max(0, x-1), max(0, y-1), max(0, z-1)
+                t_latest = np.max(world.times[x_low_bound:x+2,y_low_bound:y+2,z_low_bound:z+2])
+                t_now = step
+                h = compute_height(pos, world)
+                prob = prob_drop(N, t_now, t_latest, decay_rate, h)
+                x_temp = x_s[i]
+                if x_temp < prob:
+                    # chosen move
+                    chosen_move = random_choices(moves)[0]
+                    new_pos = np.array(pos)+chosen_move[1]
+                    # do the step
+                    world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
+                    agent_dict[i][0] = (new_pos[0], new_pos[1], new_pos[2])
+                    # update total built volume
+                    total_built_volume += 1
+                    # do the drop
+                    world.grid[x,y,z] = 2
+                    pellet_num-=1
+                    # update pellet info
+                    agent_dict[i][1] = 0
+                    # update time tensor at pos
+                    world.times[x, y, z] = t_now
 
     # collect data
     if collect_data:
@@ -143,11 +153,8 @@ if collect_data:
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)
-    df.to_pickle('./data_exports/mean_field_khuong_data.pkl')
+    df.to_pickle('./data_exports/original_khuong_data.pkl')
 
 # render world mayavi
 if final_render:
     render(world)
-
-
-

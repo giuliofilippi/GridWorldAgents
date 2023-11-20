@@ -3,7 +3,6 @@ import numpy as np
 from collections import OrderedDict
 from functions import (update_surface_function,
                        construct_rw_sparse_tensors)
-import scipy.sparse as sp
 
 # World class
 class World:
@@ -96,10 +95,11 @@ class Surface:
         del self.degrees[vertex]
     
     # get sparse matrix T, sparse vectors v0, v1 and vertex_list (Random Walk)
-    def get_rw_sparse_tensors(self, pellet_pos_list, no_pellet_pos_list):
+    def get_rw_sparse_tensors(self, no_pellet_pos_list, pellet_pos_list):
         vertices, T, v0, v1 = construct_rw_sparse_tensors(self.graph, 
-                                                       pellet_pos_list, 
-                                                       no_pellet_pos_list)
+                                                          no_pellet_pos_list,
+                                                          pellet_pos_list 
+                                                       )
         return vertices, T, v0, v1
     
     # get stationary distribution (Random Walk)
