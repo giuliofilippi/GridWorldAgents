@@ -1,3 +1,0 @@
-numpy==1.19.2
-mayavi==4.8.0
-moviepy==1.0.3
