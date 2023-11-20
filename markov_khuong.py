@@ -131,8 +131,6 @@ for step in tqdm(range(num_steps)):
     if render_images:
         # every 5 minutes
         if step % 300 == 0:
-            # compute pheromones for gradients
-            world.pheromones = np.e**(-decay_rate*(step-world.times))
             # export image
             render(world, show=False, save=True, name="animation/image_{}.png".format(step+1))
 

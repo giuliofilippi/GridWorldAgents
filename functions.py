@@ -1,6 +1,7 @@
 # imports
 import numpy as np
 from mayavi import mlab
+from collections import OrderedDict
 from scipy.stats import skewnorm
 import scipy.sparse as sp
 
@@ -44,8 +45,32 @@ neighbour_directions = np.array([
     [1, 0, 0], # Right
     [-1, 0, 0] # Left
 ])
+center_loc = np.array([1,1,1])
+neighbour_filter = np.array([
+       [[0, 0, 0],
+        [0, 1, 0],
+        [0, 0, 0]],
+       [[0, 1, 0],
+        [1, 0, 1],
+        [0, 1, 0]],
+       [[0, 0, 0],
+        [0, 1, 0],
+        [0, 0, 0]]])
 
 # ------------ Helper functions ----------------
+
+# random initial config
+def random_initial_config(width, lenght, soil_height, num_agents):
+    open_initial_positions = []
+    agent_dict = OrderedDict()
+    for i in range(width):
+        for j in range(lenght):
+            open_initial_positions.append((i,j,soil_height))
+    
+    random_positions = random_choices(open_initial_positions, size=num_agents, p=None)
+    for i,pos in enumerate(random_positions):
+        agent_dict[i] = [pos,0]
+    return agent_dict
 
 # get initial surface graph
 def get_initial_graph(width, lenght, soil_height):
@@ -82,6 +107,63 @@ def get_neighbours(pos, graph):
             # if yes, append
             neighbours.append(new_pos)
     return neighbours
+
+# returns the valid move directions from local data
+def valid_move_directions(local_data):
+    dirs = []
+    # loop over 6 neighbours
+    for dir in neighbour_directions:
+        new_pos = center_loc + dir
+        if local_data[new_pos[0], new_pos[1], new_pos[2]]==0:
+            # slice lower bounds
+            x_low_bound = max(0, new_pos[0]-1)
+            y_low_bound = max(0, new_pos[1]-1)
+            z_low_bound = max(0, new_pos[2]-1)
+            # sliced array
+            new_local_data = local_data[x_low_bound:new_pos[0]+2, y_low_bound:new_pos[1]+2, z_low_bound:new_pos[2]+2]
+            # check for any material
+            if (new_local_data>0).any():
+                dirs.append(dir)
+    return dirs
+
+# checks neighbours for some material
+def voxel_shares_face_with_material(local_data):
+    filtered = local_data*neighbour_filter
+    shares_face = (filtered > 0).any()
+    # return binary condition
+    return shares_face
+
+# list of valid actions from local data tensor (TODO)
+def valid_actions(local_data, has_pellet):
+        action_list = []
+        move_directions = valid_move_directions(local_data)
+        # move
+        if len(move_directions)>0:
+            for dir in move_directions:
+                action_list.append(('move',dir)) # movements
+            # drop
+            if has_pellet is True:
+                if voxel_shares_face_with_material(local_data):
+                    ind = np.random.randint(0,len(move_directions))
+                    dir = move_directions[ind]
+                    action_list.append(('drop',dir)) # drop with random movement
+        # pickup
+        if has_pellet is False:
+            under = np.array([0,0,-1])
+            if local_data[1,1,0] in [1,2]:
+                action_list.append(('pickup',under)) # pickup
+
+        return action_list
+
+# list of valid moves from local data tensor (TODO)
+def valid_moves(local_data):
+        action_list = []
+        move_directions = valid_move_directions(local_data)
+        # moves in format
+        if len(move_directions)>0:
+            for dir in move_directions:
+                action_list.append(('move',dir)) # movements
+        return action_list
 
 # update graph
 def update_surface_function(surface, type, pos, world):
