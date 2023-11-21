@@ -9,8 +9,6 @@ from tqdm import tqdm
 from classes import World, Surface
 from functions import (get_initial_graph,
                        random_choices,
-                       get_neighbours,
-                       local_grid_data,
                        conditional_random_choice,
                        construct_rw_sparse_matrix,
                        sparse_matrix_power,
@@ -36,7 +34,7 @@ np_agents = random_choices(list(surface.graph.keys()), num_agents)
 
 # extra params
 collect_data = True
-render_images = False
+render_images = True
 final_render = False
 if render_images:
     mlab.options.offscreen = True
@@ -64,6 +62,7 @@ for step in tqdm(range(num_steps)):
     # create transition matrix and take power
     index_dict, vertices, T = construct_rw_sparse_matrix(surface.graph)
     Tm = sparse_matrix_power(T, m)
+
     # pickup algorithm
     for i in range(np_num):
         # position
@@ -109,16 +108,18 @@ for step in tqdm(range(num_steps)):
         # drop algorithm
         new_pos = drop_algorithm_graph(random_pos, world, surface.graph, step, decay_rate, x_rand = random_values_1[j])
         if new_pos is not None:
-            # update data and surface
+            # update data
             pellet_num -= 1
             new_np_agents.append(new_pos)
-            # extra removed index for agent new position
-            removed_indices.append(index_dict[new_pos])
+            # also remove new position if it is in index dict
+            if new_pos in index_dict:
+                removed_indices.append(index_dict[new_pos])
+            # update surface
             surface.update_surface(type='drop', 
                                     pos=random_pos, 
                                     world=world)
         else:
-            # remove index and append to np agents
+            # append to p agents because didnt drop
             new_p_agents.append(random_pos)
 
     # reset variables for next loop

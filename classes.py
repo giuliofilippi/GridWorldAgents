@@ -82,6 +82,20 @@ class World:
             tensor = new_tensor
         # return
         return tensor
+    
+    # move method
+    def move_agent(self, old_pos, new_pos):
+        self.grid[old_pos[0],old_pos[1],old_pos[2]] = 0
+        self.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
+
+    # pickup method
+    def pickup(self, pos):
+        self.grid[pos[0],pos[1],pos[2]-1] = 0
+
+    # drop method
+    def drop(self, pos):
+        self.grid[pos[0],pos[1],pos[2]] = 2
+
 
 # Surface class
 class Surface:
