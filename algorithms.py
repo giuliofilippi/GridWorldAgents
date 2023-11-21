@@ -22,6 +22,15 @@ mod_list = skewnorm.cdf(x=np.array(range(200))/2, a=8.582, loc=2.866, scale=3.72
 
 # pickup rate
 def eta_p(N):
+    """
+    Calculates the pickup rate.
+
+    Parameters:
+    - N: Number of particles.
+
+    Returns:
+    - Pickup rate.
+    """
     # experiment params
     n_p1 = 0.029
     if N==0:
@@ -31,6 +40,15 @@ def eta_p(N):
 
 # dropping rate
 def eta_d(N):
+    """
+    Calculates the dropping rate.
+
+    Parameters:
+    - N: Number of particles.
+
+    Returns:
+    - Dropping rate.
+    """
     # experiment params
     n_d0 = 0.025
     b_d = 0.11
@@ -41,12 +59,34 @@ def eta_d(N):
 
 # pickup prob function
 def prob_pickup(N):
+    """
+    Calculates the probability of pickup.
+
+    Parameters:
+    - N: Number of particles.
+
+    Returns:
+    - Pickup probability.
+    """
     # see paper for formula
     prob = 1 - np.e**(-eta_p(N))
     return prob
 
 # drop prob function
 def prob_drop(N, t_now, t_latest, decay_rate, h):
+    """
+    Calculates the probability of dropping.
+
+    Parameters:
+    - N: Number of particles.
+    - t_now: Current time step.
+    - t_latest: Latest time step.
+    - decay_rate: Rate of decay.
+    - h: Height.
+
+    Returns:
+    - Drop probability.
+    """
     # time delta
     tau = t_now-t_latest
     # see paper for formula
@@ -62,6 +102,17 @@ def prob_drop(N, t_now, t_latest, decay_rate, h):
 
 # move algorithm
 def move_algorithm(pos, world, m):
+    """
+    Executes the move algorithm.
+
+    Parameters:
+    - pos: Current position.
+    - world: The World object.
+    - m: Number of moves.
+
+    Returns:
+    - Final position after moving.
+    """
     for j in range(m):
         x,y,z = pos
         local_data = local_grid_data(pos, world)
@@ -79,6 +130,17 @@ def move_algorithm(pos, world, m):
 
 # pickup algorithm
 def pickup_algorithm(pos, world, x_rand):
+    """
+    Executes the pickup algorithm.
+
+    Parameters:
+    - pos: Current position.
+    - world: The World object.
+    - x_rand: Random variable.
+
+    Returns:
+    - Material picked up or None.
+    """
     x,y,z = pos
     if world.grid[x,y,z-1] > 0:
         v26 = local_grid_data(pos, world)
@@ -94,6 +156,19 @@ def pickup_algorithm(pos, world, x_rand):
 
 # drop algorithm
 def drop_algorithm(pos, world, step, decay_rate, x_rand):
+    """
+    Executes the drop algorithm.
+
+    Parameters:
+    - pos: Current position.
+    - world: The World object.
+    - step: Current step.
+    - decay_rate: Rate of decay.
+    - x_rand: Random variable.
+
+    Returns:
+    - New position after dropping or None.
+    """
     x,y,z = pos
     v26 = local_grid_data(pos, world)
     moves = valid_moves(v26)
@@ -119,8 +194,22 @@ def drop_algorithm(pos, world, step, decay_rate, x_rand):
     # if no drop occureed return None
     return None
 
-# drop algorithm
+# drop algorithm graph version
 def drop_algorithm_graph(pos, world, graph, step, decay_rate, x_rand):
+    """
+    Executes the drop algorithm with a graph.
+
+    Parameters:
+    - pos: Current position.
+    - world: The World object.
+    - graph: Graph representing neighbors.
+    - step: Current step.
+    - decay_rate: Rate of decay.
+    - x_rand: Random variable.
+
+    Returns:
+    - New position (neighbor) after dropping or None.
+    """
     # neighbours of pos in graph
     nbrs = get_neighbours(pos, graph)
     # only act if there is an available move

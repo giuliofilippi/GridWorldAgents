@@ -4,6 +4,21 @@ import moviepy.editor as mpy
 
 # make an mp4 from folder of images
 def make_mp4(folder='animation', name='NAME'):
+    """
+    Creates an MP4 video from a folder containing images.
+
+    Parameters:
+    - folder (str): The path to the folder containing images. Default is 'animation'.
+    - name (str): The name of the output MP4 file. Default is 'NAME'.
+
+    Returns:
+    - None
+
+    Note:
+    - The images in the folder should be named with a common prefix and a numerical index
+      (e.g., 'frame_1.png', 'frame_2.png', ...).
+    - The resulting MP4 video will be saved in the 'video_exports' directory with the specified name.
+    """
     # file list
     file_list = (os.listdir(folder))
     print (file_list)

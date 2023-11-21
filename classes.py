@@ -6,6 +6,24 @@ from functions import (update_surface_function,
 
 # World class
 class World:
+    """
+    Represents the environment in which agents and objects interact.
+
+    Attributes:
+    - width: Width of the space.
+    - length: Length of the space.
+    - height: Height of the space.
+    - soil_height: Height of the soil.
+    - objects: Array representing objects in the world.
+    - grid: 3D array representing the state of the world.
+    - times: 3D array representing time information for each voxel.
+    - field: 3D array representing the field in the world.
+    - pheromones: 3D array representing pheromone concentrations in the world.
+
+    Methods:
+    - __init__: Initializes a new instance of the World class.
+    - diffuse_tensor: Diffuses a given tensor in the world.
+    """
     # init
     def __init__(self, width, length, height, soil_height, objects=None):
         # attributes: width, lenght, height, soil_height, objects, grid, times, field, pheromones
@@ -28,6 +46,17 @@ class World:
     
     # can diffuse any tensor using zero gradient boundary condition
     def diffuse_tensor(self, tensor, diffusion_rate, num_iterations=1):
+        """
+        Diffuses a given tensor in the world.
+
+        Parameters:
+        - tensor: The tensor to be diffused.
+        - diffusion_rate: Rate of diffusion.
+        - num_iterations: Number of diffusion iterations.
+
+        Returns:
+        - The diffused tensor.
+        """
         # usually 1 iteration
         for _ in range(num_iterations):
             # copy to avoid overwrite
@@ -56,6 +85,24 @@ class World:
 
 # Surface class
 class Surface:
+    """
+    Represents the surface graph of the environment.
+
+    Attributes:
+    - graph: Dictionary representing the graph structure.
+    - degrees: Dictionary representing the degrees of vertices in the graph.
+    - num_edges: Number of edges in the graph.
+
+    Methods:
+    - __init__: Initializes a new instance of the Surface class.
+    - get_num_vertices: Returns the number of vertices in the graph.
+    - get_num_edges: Returns the number of edges in the graph.
+    - add_edge: Adds an edge to the graph.
+    - remove_vertex: Removes a vertex from the graph.
+    - get_rw_sparse_matrix: Gets the Random Walk sparse matrix.
+    - get_rw_stationary_distribution: Gets the stationary distribution for Random Walk.
+    - update_surface: Updates the surface based on a specific action type.
+    """
     # init
     def __init__(self, graph):
         # attributes: graph, degrees, num_edges
@@ -69,14 +116,35 @@ class Surface:
 
     # number of vertices
     def get_num_vertices(self):
+        """
+        Returns the number of vertices in the graph.
+
+        Returns:
+        - Number of vertices.
+        """
         return(len(self.graph.keys()))
     
     # number of edges
     def get_num_edges(self):
+        """
+        Returns the number of edges in the graph.
+
+        Returns:
+        - Number of edges.
+        """
         return(np.sum([len(self.graph[v]) for v in self.graph.keys()])/2)
     
     # add an edge to graph
     def add_edge(self, pair):
+        """
+        Adds an edge to the graph.
+
+        Parameters:
+        - pair: Tuple representing the edge.
+
+        Returns:
+        - None.
+        """
         v1, v2 = pair
         self.graph[v1].append(v2)
         self.graph[v2].append(v1)
@@ -86,6 +154,15 @@ class Surface:
 
     # remove vertex from graph
     def remove_vertex(self, vertex):
+        """
+        Removes a vertex from the graph.
+
+        Parameters:
+        - vertex: Vertex to be removed.
+
+        Returns:
+        - None.
+        """
         nbrs = self.graph[vertex]
         for nbr in nbrs:
             self.graph[nbr].remove(vertex)
@@ -96,6 +173,16 @@ class Surface:
     
     # get sparse matrix T, sparse vectors v0, v1 and vertex_list (Random Walk)
     def get_rw_sparse_matrix(self, no_pellet_pos_list, pellet_pos_list):
+        """
+        Gets the Random Walk sparse matrix.
+
+        Parameters:
+        - no_pellet_pos_list: List of positions without pellets.
+        - pellet_pos_list: List of positions with pellets.
+
+        Returns:
+        - Index dictionary, vertices list, and the sparse matrix T.
+        """
         index_dict, vertices, T = construct_rw_sparse_matrix(self.graph, 
                                                           no_pellet_pos_list,
                                                           pellet_pos_list 
@@ -104,11 +191,28 @@ class Surface:
     
     # get stationary distribution (Random Walk)
     def get_rw_stationary_distribution(self):
+        """
+        Gets the stationary distribution for Random Walk.
+
+        Returns:
+        - Stationary distribution as a numpy array.
+        """
         p = np.array([self.degrees[v] for v in self.graph.keys()])
         p = p/(2*self.num_edges)
         return p
     
     # update surface
     def update_surface(self, type, pos, world):
+        """
+        Updates the surface based on a specific action type.
+
+        Parameters:
+        - type: Type of action ('pickup' or 'drop').
+        - pos: Position in the world.
+        - world: The world object.
+
+        Returns:
+        - None.
+        """
         # see functions for details
         update_surface_function(self, type, pos, world)
