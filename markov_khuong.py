@@ -9,7 +9,10 @@ from tqdm import tqdm
 from classes import World, Surface
 from functions import (get_initial_graph,
                        random_choices,
-                       conditional_random_choices,
+                       get_neighbours,
+                       local_grid_data,
+                       conditional_random_choice,
+                       construct_rw_sparse_matrix,
                        sparse_matrix_power,
                        render)
 
@@ -21,7 +24,7 @@ world = World(200, 200, 200, 20) # 200, 200, 200, 20
 surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
 
 # khuong params
-num_steps = 100 # should be 345600 steps (for 96 hours)
+num_steps = 60*30 # should be 345600 steps (for 96 hours)
 num_agents = 500 # number of agents
 m = 4 # num moves per agent
 lifetime = 1200 # pheromone lifetime in seconds
@@ -33,7 +36,7 @@ np_agents = random_choices(list(surface.graph.keys()), num_agents)
 
 # extra params
 collect_data = True
-render_images = True
+render_images = False
 final_render = False
 if render_images:
     mlab.options.offscreen = True
@@ -59,17 +62,16 @@ for step in tqdm(range(num_steps)):
     random_values_0 = np.random.random(np_num)
     random_values_1 = np.random.random(p_num)
     # create transition matrix and take power
-    index_dict, vertices, T = surface.get_rw_sparse_matrix()
+    index_dict, vertices, T = construct_rw_sparse_matrix(surface.graph)
     Tm = sparse_matrix_power(T, m)
-
     # pickup algorithm
     for i in range(np_num):
         # position
         prob_dist = Tm[index_dict[np_agents[i]]].toarray().flatten()
-        random_pos = conditional_random_choices(vertices, 
-                                                size=1, 
+        random_pos = conditional_random_choice(vertices,
                                                 p = prob_dist, 
-                                                removed_indices=removed_indices)[0]
+                                                removed_indices=removed_indices)
+        # remove position from index
         removed_indices.append(index_dict[random_pos])
         
         # on floor check for stats
@@ -83,7 +85,6 @@ for step in tqdm(range(num_steps)):
             # update data and surface
             pellet_num += 1
             new_p_agents.append((x,y,z))
-            world.grid[x,y,z] = -2
             surface.update_surface(type='pickup', 
                                     pos=random_pos, 
                                     world=world)
@@ -94,10 +95,10 @@ for step in tqdm(range(num_steps)):
     for j in range(p_num):
         # position
         prob_dist = Tm[index_dict[p_agents[j]]].toarray().flatten()
-        random_pos = conditional_random_choices(vertices, 
-                                                size=1, 
+        random_pos = conditional_random_choice(vertices,
                                                 p = prob_dist, 
-                                                removed_indices=removed_indices)[0]
+                                                removed_indices=removed_indices)
+        # remove position from index
         removed_indices.append(index_dict[random_pos])
 
         # on floor check for stats
@@ -111,12 +112,14 @@ for step in tqdm(range(num_steps)):
             # update data and surface
             pellet_num -= 1
             new_np_agents.append(new_pos)
-            world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
+            # extra removed index for agent new position
+            removed_indices.append(index_dict[new_pos])
             surface.update_surface(type='drop', 
                                     pos=random_pos, 
                                     world=world)
         else:
-            new_p_agents.append((x,y,z))
+            # remove index and append to np agents
+            new_p_agents.append(random_pos)
 
     # reset variables for next loop
     np_agents = new_np_agents
@@ -132,7 +135,7 @@ for step in tqdm(range(num_steps)):
     # if render images
     if render_images:
         # every 5 minutes
-        if step % 60 == 0:
+        if step % (5*60) == 0:
             # export image
             render(world, show=False, save=True, name="animation_folder/markov_{}.png".format(step+1))
 

@@ -378,32 +378,28 @@ def random_choices(ls, size=1, p=None):
         return choices
     
 # conditional random choices function
-def conditional_random_choices(ls, size=1, p=None, removed_indices=None):
+def conditional_random_choice(ls, p=None, removed_indices=None):
     """
-    Performs random choices with a condition on the probabilities.
+    Performs a random choice with a condition on the probabilities.
 
     Parameters:
-    - ls: List of elements.
-    - size: Number of elements to choose.
+    - ls: List of elements (tuples).
     - p: Probabilities.
     - removed_indices: Indices to be removed from consideration.
 
     Returns:
-    - List of randomly chosen elements.
+    - A randomly chosen element.
     """
     # No prob dist given
     if p is None:
-        chosen_indices = np.random.choice(range(len(ls)), size, replace=False)
-        choices = [ls[i] for i in chosen_indices]
-        return choices
+        return ls[np.random.choice(len(ls))]
     # A prob dist is given
     else:
-        new_p = p
+        new_p = p.copy()
         new_p[removed_indices] = 0
-        new_p = new_p/np.sum(new_p)
-        chosen_indices = np.random.choice(range(len(ls)), size, p=new_p, replace=False)
-        choices = [ls[i] for i in chosen_indices]
-        return choices
+        new_p /= np.sum(new_p)
+        chosen_index = np.random.choice(len(ls), p=new_p)
+        return ls[chosen_index]
     
 # dual random choices function
 def dual_random_choices(ls, size0, size1, prob0, prob1=None):

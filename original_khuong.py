@@ -24,7 +24,7 @@ for agent,item in agent_dict.items():
     world.grid[pos[0],pos[1],pos[2]] = -2
 
 # khuong params
-num_steps = 100 # should be 345600 steps (96 hours)
+num_steps = 60*30 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
 m = 4 # should be 1500 num moves per agent
 lifetime = 1200 # phermone lifetime
@@ -95,7 +95,7 @@ for step in tqdm(range(num_steps)):
     # render images
     if render_images:
         # every minute
-        if step % 60 == 0:
+        if step % (5*60) == 0:
             render(world, show=False, save=True, name="animation_folder/original_{}.png".format(step+1))
 
 # end time

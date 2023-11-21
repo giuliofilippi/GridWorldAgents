@@ -207,7 +207,7 @@ class Surface:
         - world: The world object.
 
         Returns:
-        - None.
+        - None
         """
         # see functions for details
         update_surface_function(self, type, pos, world)

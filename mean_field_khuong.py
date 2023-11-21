@@ -19,7 +19,7 @@ world = World(200, 200, 200, 20) # 200, 200, 200, 20
 surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
 
 # khuong params
-num_steps = 60*5 # should be 345600 steps (96 hours)
+num_steps = 60*30 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
 no_pellet_num = 500 # number of agents with no pellet
 lifetime = 1200
@@ -96,7 +96,7 @@ for step in tqdm(range(num_steps)):
     # render images
     if render_images:
         # every minute
-        if step % 60 == 0:
+        if step % (5*60) == 0:
             render(world, show=False, save=True, name="animation_folder/mean_field_{}.png".format(step+1))
 
 # end time
