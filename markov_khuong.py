@@ -59,7 +59,7 @@ for step in tqdm(range(num_steps)):
     random_values_0 = np.random.random(np_num)
     random_values_1 = np.random.random(p_num)
     # create transition matrix and take power
-    index_dict, vertices, T = surface.get_rw_sparse_matrix(np_agents, p_agents)
+    index_dict, vertices, T = surface.get_rw_sparse_matrix()
     Tm = sparse_matrix_power(T, m)
 
     # pickup algorithm

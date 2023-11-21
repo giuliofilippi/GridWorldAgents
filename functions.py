@@ -455,14 +455,12 @@ def dual_random_choices(ls, size0, size1, prob0, prob1=None):
 # --------------------------------------------
 
 # construct sparse tensors
-def construct_rw_sparse_matrix(graph, no_pellet_pos_list, pellet_pos_list):
+def construct_rw_sparse_matrix(graph):
     """
     Constructs a sparse matrix representation for a given graph.
 
     Parameters:
     - graph: Graph representing the world.
-    - no_pellet_pos_list: List of positions without pellets.
-    - pellet_pos_list: List of positions with pellets.
 
     Returns:
     - Index dictionary, vertices, and sparse matrix.
@@ -470,9 +468,6 @@ def construct_rw_sparse_matrix(graph, no_pellet_pos_list, pellet_pos_list):
     # variables
     vertices = list(graph.keys())
     num_vertices = len(vertices)
-    num_no_pellet = len(no_pellet_pos_list)
-    num_pellet = len(pellet_pos_list)
-    num_agents = num_no_pellet + num_pellet
     
     # build index
     index_dict = {vertex: i for i, vertex in enumerate(vertices)}

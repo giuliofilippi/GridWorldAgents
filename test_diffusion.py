@@ -28,3 +28,8 @@ print(new_tensor[25,25,25])
 # plot
 world.grid[np.where(new_tensor!=0)]=2
 render(world)
+
+'''
+Seems diffusion is working as we would expect, bouncing against objects
+and leaking out of the world on boundaries.
+'''

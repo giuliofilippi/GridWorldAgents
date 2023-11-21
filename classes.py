@@ -172,21 +172,16 @@ class Surface:
         del self.degrees[vertex]
     
     # get sparse matrix T, sparse vectors v0, v1 and vertex_list (Random Walk)
-    def get_rw_sparse_matrix(self, no_pellet_pos_list, pellet_pos_list):
+    def get_rw_sparse_matrix(self):
         """
         Gets the Random Walk sparse matrix.
 
         Parameters:
-        - no_pellet_pos_list: List of positions without pellets.
-        - pellet_pos_list: List of positions with pellets.
 
         Returns:
         - Index dictionary, vertices list, and the sparse matrix T.
         """
-        index_dict, vertices, T = construct_rw_sparse_matrix(self.graph, 
-                                                          no_pellet_pos_list,
-                                                          pellet_pos_list 
-                                                       )
+        index_dict, vertices, T = construct_rw_sparse_matrix(self.graph)
         return index_dict, vertices, T
     
     # get stationary distribution (Random Walk)
