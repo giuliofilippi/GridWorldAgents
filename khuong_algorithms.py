@@ -13,12 +13,8 @@ from functions import (random_choices,
 from scipy.stats import skewnorm
 mod_list = skewnorm.cdf(x=np.array(range(200))/2, a=8.582, loc=2.866, scale=3.727)
 
-
-
 # ------------ Khuong functions ----------------
 # ----------------------------------------------
-
-
 
 # pickup rate
 def eta_p(N):
@@ -127,7 +123,6 @@ def move_algorithm(pos, world, m):
     # return final position
     return (pos[0], pos[1], pos[2])
 
-
 # pickup algorithm
 def pickup_algorithm(pos, world, x_rand):
     """
@@ -233,5 +228,4 @@ def drop_algorithm_graph(pos, world, graph, step, decay_rate, x_rand):
             # return new position
             return chosen_nbr
     # if no drop occureed return None
-    return None
-        
+    return None 

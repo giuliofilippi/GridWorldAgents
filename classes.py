@@ -44,7 +44,7 @@ class World:
                 if obj.shape == self.grid.shape:
                     self.grid[obj == 1] = -1  # Object
     
-    # can diffuse any tensor using zero gradient boundary condition
+    # can diffuse any tensor in world using zero gradient boundary condition
     def diffuse(self, tensor, diffusion_rate, num_iterations=1):
         """
         Diffuses a given tensor in the world.

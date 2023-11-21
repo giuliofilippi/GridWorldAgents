@@ -12,7 +12,7 @@ from functions import (get_initial_graph,
                        render)
 
 # algorithms
-from algorithms import pickup_algorithm, drop_algorithm_graph
+from khuong_algorithms import pickup_algorithm, drop_algorithm_graph
 
 # initialize
 world = World(200, 200, 200, 20) # 200, 200, 200, 20
@@ -97,7 +97,7 @@ for step in tqdm(range(num_steps)):
     if render_images:
         # every 5 minutes
         if step % 300 == 0:
-            render(world, show=False, save=True, name="animation/image_{}.png".format(step+1))
+            render(world, show=False, save=True, name="animation_folder/image_{}.png".format(step+1))
 
 # end time
 end_time = time.time()

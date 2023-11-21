@@ -3,7 +3,7 @@ import os
 import moviepy.editor as mpy
 
 # make an mp4 from folder of images
-def make_mp4(folder='animation', name='NAME'):
+def make_mp4(folder='animation_folder', name='NAME'):
     """
     Creates an MP4 video from a folder containing images.
 

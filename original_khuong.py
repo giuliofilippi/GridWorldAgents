@@ -11,7 +11,7 @@ from functions import (random_initial_config,
                        render)
 
 # algorithms
-from algorithms import (
+from khuong_algorithms import (
     move_algorithm,
     pickup_algorithm,
     drop_algorithm)
@@ -96,7 +96,7 @@ for step in tqdm(range(num_steps)):
     if render_images:
         # every 5 minutes
         if step % 300 == 0:
-            render(world, show=False, save=True, name="animation/image_{}.png".format(step+1))
+            render(world, show=False, save=True, name="animation_folder/image_{}.png".format(step+1))
 
 # end time
 end_time = time.time()
