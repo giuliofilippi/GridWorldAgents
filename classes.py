@@ -85,15 +85,43 @@ class World:
     
     # move method
     def move_agent(self, old_pos, new_pos):
+        """
+        Move an agent from the old position to the new position in the grid.
+
+        Parameters:
+        - old_pos: Tuple representing the old position (x, y, z) of the agent.
+        - new_pos: Tuple representing the new position (x, y, z) where the agent will move.
+
+        Returns:
+        None
+        """
         self.grid[old_pos[0],old_pos[1],old_pos[2]] = 0
         self.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
 
     # pickup method
     def pickup(self, pos):
+        """
+        Pick up a material from the position (x, y, z-1) in the grid.
+
+        Parameters:
+        - pos: Tuple representing the position (x, y, z) of the agent.
+
+        Returns:
+        None
+        """
         self.grid[pos[0],pos[1],pos[2]-1] = 0
 
     # drop method
     def drop(self, pos):
+        """
+        Drop a material at the position (x, y, z) in the grid.
+
+        Parameters:
+        - pos: Tuple representing the position (x, y, z) where the agent will drop the material.
+
+        Returns:
+        None
+        """
         self.grid[pos[0],pos[1],pos[2]] = 2
 
 
@@ -121,7 +149,7 @@ class Surface:
     def __init__(self, graph):
         # attributes: graph, degrees, num_edges
         self.graph = OrderedDict(graph)
-        self.degrees = OrderedDict()
+        self.degrees = {}
         self.num_edges = 0
         for v in self.graph.keys():
             deg = len(self.graph[v])
