@@ -17,12 +17,12 @@ world = World(60, 60, 60, 20, objects = [obj]) # 200, 200, 200, 20
 # start time
 start_time = time.time()
 # diffuse
-new_tensor = world.diffuse(tensor, diffusion_rate=0.25, num_iterations=15)
+new_tensor = world.diffuse(tensor, diffusion_rate=0.25, num_iterations=10)
 # end time
 end_time = time.time()
 print("total time taken for this loop: ", end_time - start_time)
 
-# print
+# print tensor within object
 print(new_tensor[25,25,25])
 
 # plot
@@ -31,5 +31,6 @@ render(world)
 
 '''
 Seems diffusion is working as we would expect, bouncing against objects
-and leaking out of the world on boundaries.
+and leaking out of the world on boundaries. It takes about 1 second per
+iteration in a 60*60*60 world.
 '''
