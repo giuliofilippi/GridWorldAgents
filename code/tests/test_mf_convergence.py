@@ -19,7 +19,7 @@ surface = Surface(get_initial_graph(world.width, world.length, world.soil_height
 # build initial sparse transition matrix T
 index_dict, vertices, T = surface.get_rw_sparse_matrix()
 
-'''
+
 # start time
 start_time = time.time()
 # find second largest eigenvalue in modulus
@@ -30,7 +30,7 @@ end_time = time.time()
 print("total time taken for this loop: ", end_time - start_time)
 # check for convergence
 print(sle**1500)
-'''
+
 
 '''
 # start time

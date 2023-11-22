@@ -63,7 +63,7 @@ center_loc = np.array([1,1,1])
 # ----------------------------------------------
 
 # random initial config
-def random_initial_config(width, lenght, soil_height, num_agents):
+def random_initial_config(width, lenght, soil_height, num_agents, objects=None):
     """
     Generates a random initial configuration for agents in a given space.
 
@@ -72,6 +72,7 @@ def random_initial_config(width, lenght, soil_height, num_agents):
     - length: Length of the space.
     - soil_height: Height of the soil.
     - num_agents: Number of agents.
+    - objects: Objects in world (To Implement)
 
     Returns:
     - OrderedDict with agent configurations.
@@ -135,7 +136,7 @@ def compute_height(pos, world):
     x,y,z = pos
     max_h = world.height
     h=0
-    for _ in range(max_h):
+    for i in range(max_h):
         z-=1
         cell = world.grid[x,y,z]
         if cell > 0:
@@ -529,7 +530,6 @@ def cross_entropy(p_emp, p_stat, epsilon=1e-15):
     """
     p_emp = np.clip(p_emp, epsilon, 1 - epsilon)  # Clip probabilities to avoid log(0)
     p_stat = np.clip(p_stat, epsilon, 1 - epsilon)  # Clip probabilities to avoid log(0)
-
     return -np.sum(p_emp * np.log(p_stat))
 
 
@@ -552,7 +552,7 @@ def render(world, show=True, save=False, name="image_1.png"):
     # Define colors based on your values
     basic = {
         1: (1, 1, 1),    # Soil
-        -1: (1, 0, 0),    # Objects
+        #-1: (1, 0, 0),    # Objects
         #-2:(0, 0, 1),    # Agents
         2:(1, 0.75, 0) # Built structure
         }
