@@ -8,8 +8,8 @@ We extend the previous mean field model to allow for an arbitrary transition mat
 
 ## Mean Field Approach
 
-Mean field approximations to agent based models in grid world.
+Mean field approximations to agent based models in grid world. We assume m is large enough for the distribution to mix into the stationary distribution, no matter what the starting position is.
 
 ## ML Approach
 
-THe goal is to learn the rules of the world and later learn to build in the world.
+The goal is to learn the rules of the world and later learn to build in the world. To do so we could use Reinforcement Learning, on-policy or off-policy.

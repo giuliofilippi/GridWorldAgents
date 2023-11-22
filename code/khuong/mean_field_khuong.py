@@ -23,16 +23,16 @@ world = World(200, 200, 200, 20) # 200, 200, 200, 20
 surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
 
 # khuong params
-num_steps = 345600 # should be 345600 steps (96 hours)
+num_steps = 1000 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
-no_pellet_num = 500 # number of agents with no pellet
+pellet_num = 0 # number of agents with pellet in beginning
 lifetime = 1200
 decay_rate = 1/lifetime
 
 # extra params
-collect_data = False
+collect_data = True
 render_images = False
-final_render = True
+final_render = False
 if render_images:
     mlab.options.offscreen = True
 
@@ -54,6 +54,8 @@ for step in tqdm(range(num_steps)):
     vertex_list = list(surface.graph.keys())
     p = surface.get_rw_stationary_distribution()
     random_positions = random_choices(vertex_list, size=num_agents, p=p)
+    # fix no pellet num for cycle
+    pellet_num_cycle = pellet_num
     # loop over agents
     for i in range(num_agents):
         # random position
@@ -65,13 +67,13 @@ for step in tqdm(range(num_steps)):
             prop_on_floor += 1/num_agents
         
         # no pellet agents
-        if i < no_pellet_num:
+        if i >= pellet_num_cycle:
             # pickup algorithm
             pos = random_pos
             material = pickup_algorithm(pos, world, x_rand=random_values[i])
             if material is not None:
                 # make data updates
-                no_pellet_num -= 1
+                pellet_num += 1
                 if material == 2:
                     total_built_volume +=1
                 surface.update_surface(type='pickup', 
@@ -85,14 +87,14 @@ for step in tqdm(range(num_steps)):
             if new_pos is not None:
                 # update data and surface
                 total_built_volume += 1
-                no_pellet_num += 1
+                pellet_num -= 1
                 surface.update_surface(type='drop', 
                                             pos=random_pos, 
                                             world=world)
 
     # collect data
     if collect_data:
-        pellet_proportion_list.append((num_agents-no_pellet_num)/num_agents)
+        pellet_proportion_list.append(pellet_num/num_agents)
         floor_proportion_list.append(prop_on_floor)
         total_surface_area_list.append(len(surface.graph.keys()))
         total_built_volume_list.append(total_built_volume)
@@ -113,7 +115,7 @@ if collect_data:
     params = ['num_steps={}'.format(num_steps),
               'num_agents={}'.format(num_agents),
               'lifetime={}'.format(lifetime),
-              'runtime={}'.format(end_time - start_time)]+['']*(num_steps-4)
+              'runtime={}s'.format(int(end_time - start_time))]+['']*(num_steps-4)
     data_dict = {
         'params':params,
         'steps':steps,
@@ -123,7 +125,7 @@ if collect_data:
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)
-    df.to_pickle('./exports_data/original_khuong_data.pkl')
+    df.to_pickle('./exports_data/mean_field_khuong_data.pkl')
 
 # render world mayavi
 if final_render:

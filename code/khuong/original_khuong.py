@@ -28,16 +28,16 @@ for agent,item in agent_dict.items():
     world.grid[pos[0],pos[1],pos[2]] = -2
 
 # khuong params
-num_steps = 60*30 # should be 345600 steps (96 hours)
+num_steps = 1000 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
-m = 4 # should be 1500 num moves per agent
+m = 6 # should be 1500 num moves per agent
 lifetime = 1200 # phermone lifetime
 decay_rate = 1/lifetime # decay rate
 
 # extra params
-collect_data = False
+collect_data = True
 render_images = False
-final_render = True
+final_render = False
 if render_images:
     mlab.options.offscreen = True
 
@@ -113,12 +113,12 @@ if collect_data:
               'num_agents={}'.format(num_agents),
               'm={}'.format(m),
               'lifetime={}'.format(lifetime),
-              'runtime={}'.format(end_time - start_time)]+['']*(num_steps-5)
+              'runtime={}s'.format(int(end_time - start_time))]+['']*(num_steps-5)
     data_dict = {
         'params':params,
         'steps':steps,
         'proportion pellet':pellet_proportion_list,
-        'proportion on floor':on_floor_proportion_list,
+        'proportion floor':on_floor_proportion_list,
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)

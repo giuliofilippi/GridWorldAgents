@@ -26,9 +26,9 @@ world = World(200, 200, 200, 20) # 200, 200, 200, 20
 surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
 
 # khuong params
-num_steps = 60*30 # should be 345600 steps (for 96 hours)
+num_steps = 1000 # should be 345600 steps (for 96 hours)
 num_agents = 500 # number of agents
-m = 4 # num moves per agent
+m = 6 # num moves per agent
 lifetime = 1200 # pheromone lifetime in seconds
 decay_rate = 1/lifetime # decay rate nu_m
 
@@ -37,9 +37,9 @@ p_agents = []
 np_agents = random_choices(list(surface.graph.keys()), num_agents)
 
 # extra params
-collect_data = False
+collect_data = True
 render_images = False
-final_render = True
+final_render = False
 if render_images:
     mlab.options.offscreen = True
 
@@ -115,6 +115,7 @@ for step in tqdm(range(num_steps)):
         if new_pos is not None:
             # update data
             pellet_num -= 1
+            total_built_volume+=1
             new_np_agents.append(new_pos)
             # also remove new position if it is in index dict
             if new_pos in index_dict:
@@ -156,7 +157,7 @@ if collect_data:
               'num_agents={}'.format(num_agents),
               'm={}'.format(m),
               'lifetime={}'.format(lifetime),
-              'runtime={}'.format(end_time - start_time)]+['']*(num_steps-5)
+              'runtime={}s'.format(int(end_time - start_time))]+['']*(num_steps-5)
     data_dict = {
         'params':params,
         'steps':steps,
@@ -166,7 +167,7 @@ if collect_data:
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)
-    df.to_pickle('./exports_data/original_khuong_data.pkl')
+    df.to_pickle('./exports_data/markov_khuong_data.pkl')
 
 # render world mayavi
 if final_render:
