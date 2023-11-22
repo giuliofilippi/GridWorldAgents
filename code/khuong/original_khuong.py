@@ -1,3 +1,7 @@
+# sys
+import sys
+sys.path.append('code')
+
 # base imports
 import numpy as np
 import pandas as pd
@@ -6,12 +10,12 @@ from mayavi import mlab
 from tqdm import tqdm
 
 # classes and functions
-from code.classes import World
-from code.functions import (random_initial_config,
+from classes import World
+from functions import (random_initial_config,
                        render)
 
 # algorithms
-from khuong.khuong_algorithms import (
+from khuong_algorithms import (
     move_algorithm,
     pickup_algorithm,
     drop_algorithm)
@@ -31,9 +35,9 @@ lifetime = 1200 # phermone lifetime
 decay_rate = 1/lifetime # decay rate
 
 # extra params
-collect_data = True
-render_images = True
-final_render = False
+collect_data = False
+render_images = False
+final_render = True
 if render_images:
     mlab.options.offscreen = True
 
@@ -96,7 +100,7 @@ for step in tqdm(range(num_steps)):
     if render_images:
         # every minute
         if step % (5*60) == 0:
-            render(world, show=False, save=True, name="animation_folder/original_{}.png".format(step+1))
+            render(world, show=False, save=True, name="./exports_image/original_{}.png".format(step+1))
 
 # end time
 end_time = time.time()
@@ -118,7 +122,7 @@ if collect_data:
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)
-    df.to_pickle('./data_exports/original_khuong_data.pkl')
+    df.to_pickle('./exports_data/original_khuong_data.pkl')
 
 # render world mayavi
 if final_render:

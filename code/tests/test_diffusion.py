@@ -1,11 +1,15 @@
+# sys
+import sys
+sys.path.append('code')
+
 # base imports
 import numpy as np
 import pandas as pd
 import time
 
 # classes and functions
-from code.classes import World
-from code.functions import render
+from classes import World
+from functions import render
 
 # initialize world, object and tensor to diffuse
 obj = np.zeros((60, 60, 60))

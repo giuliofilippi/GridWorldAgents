@@ -3,7 +3,7 @@ import os
 import moviepy.editor as mpy
 
 # make an mp4 from folder of images
-def make_mp4(folder='animation_folder', name='NAME'):
+def make_mp4(folder='exports_image', name='NAME'):
     """
     Creates an MP4 video from a folder containing images.
 
@@ -32,7 +32,7 @@ def make_mp4(folder='animation_folder', name='NAME'):
     clips = [mpy.ImageClip(m).set_duration(0.3) for m in file_list]
     concat_clip = mpy.concatenate_videoclips(clips, method="compose")
     # choose NAME here
-    concat_clip.write_videofile("video_exports/{}.mp4".format(name), fps=24)
+    concat_clip.write_videofile("exports_video/{}.mp4".format(name), fps=24)
 
 # create and export an animation from images in animation folder
-make_mp4(folder='animation', name='NAME')
+make_mp4(folder='exports_image', name='NAME')

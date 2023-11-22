@@ -1,7 +1,7 @@
 # imports
 import numpy as np
 from collections import OrderedDict
-from code.functions import (update_surface_function,
+from functions import (update_surface_function,
                        construct_rw_sparse_matrix)
 
 # World class

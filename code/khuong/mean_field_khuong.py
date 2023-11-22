@@ -1,3 +1,7 @@
+# sys
+import sys
+sys.path.append('code')
+
 # base imports
 import numpy as np
 import pandas as pd
@@ -6,13 +10,13 @@ from mayavi import mlab
 from tqdm import tqdm
 
 # classes and functions
-from code.classes import World, Surface
-from code.functions import (get_initial_graph,
+from classes import World, Surface
+from functions import (get_initial_graph,
                        random_choices,
                        render)
 
 # algorithms
-from khuong.khuong_algorithms import pickup_algorithm, drop_algorithm_graph
+from khuong_algorithms import pickup_algorithm, drop_algorithm_graph
 
 # initialize
 world = World(200, 200, 200, 20) # 200, 200, 200, 20
@@ -26,9 +30,9 @@ lifetime = 1200
 decay_rate = 1/lifetime
 
 # extra params
-collect_data = True
-render_images = True
-final_render = False
+collect_data = False
+render_images = False
+final_render = True
 if render_images:
     mlab.options.offscreen = True
 
@@ -97,7 +101,7 @@ for step in tqdm(range(num_steps)):
     if render_images:
         # every minute
         if step % (5*60) == 0:
-            render(world, show=False, save=True, name="animation_folder/mean_field_{}.png".format(step+1))
+            render(world, show=False, save=True, name="./exports_image/original_{}.png".format(step+1))
 
 # end time
 end_time = time.time()
@@ -119,7 +123,7 @@ if collect_data:
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)
-    df.to_pickle('./data_exports/mean_field_khuong_data.pkl')
+    df.to_pickle('./exports_data/original_khuong_data.pkl')
 
 # render world mayavi
 if final_render:

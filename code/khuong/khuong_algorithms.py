@@ -1,11 +1,14 @@
+# sys
+import sys
+sys.path.append('code')
+
 # imports
 import numpy as np
 
 # classes and functions
-from code.classes import World
-from code.functions import (random_choices,
+from classes import World
+from functions import (random_choices,
                        local_grid_data,
-                       get_neighbours,
                        valid_moves,
                        compute_height)
 

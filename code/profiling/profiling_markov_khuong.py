@@ -1,3 +1,7 @@
+# sys
+import sys
+sys.path.append('code')
+
 # profiling
 import cProfile
 
@@ -9,8 +13,8 @@ from mayavi import mlab
 from tqdm import tqdm
 
 # classes and functions
-from code.classes import World, Surface
-from code.functions import (get_initial_graph,
+from classes import World, Surface
+from functions import (get_initial_graph,
                        random_choices,
                        conditional_random_choice,
                        construct_rw_sparse_matrix,
@@ -26,7 +30,7 @@ def code_to_profile():
     surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
 
     # khuong params
-    num_steps = 200 # should be 345600 steps (for 96 hours)
+    num_steps = 100 # should be 345600 steps (for 96 hours)
     num_agents = 500 # number of agents
     m = 4 # num moves per agent
     lifetime = 1200 # pheromone lifetime in seconds
