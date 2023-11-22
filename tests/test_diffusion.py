@@ -4,8 +4,8 @@ import pandas as pd
 import time
 
 # classes and functions
-from classes import World
-from functions import render
+from code.classes import World
+from code.functions import render
 
 # initialize world, object and tensor to diffuse
 obj = np.zeros((60, 60, 60))

@@ -6,13 +6,13 @@ from mayavi import mlab
 from tqdm import tqdm
 
 # classes and functions
-from classes import World, Surface
-from functions import (get_initial_graph,
+from code.classes import World, Surface
+from code.functions import (get_initial_graph,
                        random_choices,
                        render)
 
 # algorithms
-from khuong_algorithms import pickup_algorithm, drop_algorithm_graph
+from khuong.khuong_algorithms import pickup_algorithm, drop_algorithm_graph
 
 # initialize
 world = World(200, 200, 200, 20) # 200, 200, 200, 20

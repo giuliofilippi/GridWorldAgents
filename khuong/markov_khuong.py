@@ -6,8 +6,8 @@ from mayavi import mlab
 from tqdm import tqdm
 
 # classes and functions
-from classes import World, Surface
-from functions import (get_initial_graph,
+from code.classes import World, Surface
+from code.functions import (get_initial_graph,
                        random_choices,
                        conditional_random_choice,
                        construct_rw_sparse_matrix,
@@ -15,7 +15,7 @@ from functions import (get_initial_graph,
                        render)
 
 # khuong functions
-from khuong_algorithms import pickup_algorithm, drop_algorithm_graph
+from khuong.khuong_algorithms import pickup_algorithm, drop_algorithm_graph
 
 # initialize world and surface
 world = World(200, 200, 200, 20) # 200, 200, 200, 20
@@ -33,9 +33,9 @@ p_agents = []
 np_agents = random_choices(list(surface.graph.keys()), num_agents)
 
 # extra params
-collect_data = True
-render_images = True
-final_render = False
+collect_data = False
+render_images = False
+final_render = True
 if render_images:
     mlab.options.offscreen = True
 

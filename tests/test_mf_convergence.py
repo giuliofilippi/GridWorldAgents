@@ -5,8 +5,8 @@ from numpy.linalg import eig
 import time
 
 # classes and functions
-from classes import World, Surface
-from functions import get_initial_graph
+from code.classes import World, Surface
+from code.functions import get_initial_graph
 
 # initialize world and surface
 world = World(200, 200, 200, 20) # 200, 200, 200, 20

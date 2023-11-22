@@ -2,8 +2,8 @@
 import numpy as np
 
 # classes and functions
-from classes import World
-from functions import (random_choices,
+from code.classes import World
+from code.functions import (random_choices,
                        local_grid_data,
                        get_neighbours,
                        valid_moves,
@@ -205,10 +205,11 @@ def drop_algorithm_graph(pos, world, graph, step, decay_rate, x_rand):
     Returns:
     - New position (neighbor) after dropping or None.
     """
-    # neighbours of pos in graph
-    nbrs = get_neighbours(pos, graph)
-    # only act if there is an available move
+    # neighbours of pos in iteration graph
+    nbrs = graph[pos]
+    # only act if there is an available place to move
     if len(nbrs)>0:
+        # do the khuong stuff
         x,y,z = pos
         v26 = local_grid_data(pos, world)
         N = np.sum(v26==2)
@@ -218,6 +219,7 @@ def drop_algorithm_graph(pos, world, graph, step, decay_rate, x_rand):
         t_now = step
         h = compute_height(pos, world)
         prob = prob_drop(N, t_now, t_latest, decay_rate, h)
+        # random probability
         if x_rand < prob:
             # chosen move
             chosen_nbr = random_choices(nbrs)[0]

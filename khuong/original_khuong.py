@@ -6,12 +6,12 @@ from mayavi import mlab
 from tqdm import tqdm
 
 # classes and functions
-from classes import World
-from functions import (random_initial_config,
+from code.classes import World
+from code.functions import (random_initial_config,
                        render)
 
 # algorithms
-from khuong_algorithms import (
+from khuong.khuong_algorithms import (
     move_algorithm,
     pickup_algorithm,
     drop_algorithm)
