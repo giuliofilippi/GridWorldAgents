@@ -61,6 +61,7 @@ for step in tqdm(range(num_steps)):
     new_np_agents = []
     new_p_agents = []
     removed_indices = []
+    # generate randoms for cycle
     random_values_0 = np.random.random(np_num)
     random_values_1 = np.random.random(p_num)
     # create transition matrix and take power

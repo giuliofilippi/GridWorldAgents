@@ -149,7 +149,7 @@ class Surface:
     def __init__(self, graph):
         # attributes: graph, degrees, num_edges
         self.graph = OrderedDict(graph)
-        self.degrees = {}
+        self.degrees = OrderedDict()
         self.num_edges = 0
         for v in self.graph.keys():
             deg = len(self.graph[v])
@@ -234,7 +234,7 @@ class Surface:
         Returns:
         - Stationary distribution as a numpy array.
         """
-        p = np.array([self.degrees[v] for v in self.graph.keys()])
+        p = np.fromiter(self.degrees.values(), dtype=np.int32)
         p = p/(2*self.num_edges)
         return p
     

@@ -29,7 +29,7 @@ def code_to_profile():
     surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
 
     # khuong params
-    num_steps = 60*30 # should be 345600 steps (96 hours)
+    num_steps = 600 # should be 345600 steps (96 hours)
     num_agents = 500 # number of agents
     no_pellet_num = 500 # number of agents with no pellet
     lifetime = 1200
