@@ -1,7 +1,5 @@
 # Grid World Agents
 
-Python 3.6.13
-
 ## Original Approach
 Code for replicating Khuong paper. Stigmergic construction and topochemical information shape ant nest architecture. We run every step and every move.
 
