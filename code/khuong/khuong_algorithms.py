@@ -265,7 +265,9 @@ def drop_algorithm_new(pos, world, step, decay_rate, x_rand):
                 y_low_bound = max(0, new_loc_pos[1]-1)
                 z_low_bound = max(0, new_loc_pos[2]-1)
                 # sliced array
-                new_local_data = v26[x_low_bound:new_loc_pos[0]+2, y_low_bound:new_loc_pos[1]+2, z_low_bound:new_loc_pos[2]+2]
+                new_local_data = v26[x_low_bound:new_loc_pos[0]+2, 
+                                     y_low_bound:new_loc_pos[1]+2, 
+                                     z_low_bound:new_loc_pos[2]+2]
                 # check for any material
                 if (new_local_data>0).any():
                     new_pos = (x+dir[0], y+dir[1], z+dir[2])
@@ -295,7 +297,7 @@ def drop_algorithm_graph(pos, world, graph, step, decay_rate, x_rand):
     Returns:
     - New position (neighbor) after dropping or None.
     """
-    # neighbours of pos in iteration graph
+    # neighbours of pos in current graph
     nbrs = graph[pos]
     # only act if there is an available place to move
     if len(nbrs)>0:

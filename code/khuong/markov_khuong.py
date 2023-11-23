@@ -41,26 +41,30 @@ if render_images:
     mlab.options.offscreen = True
 
 # data storage
-pellet_proportion_list = []
-floor_proportion_list = []
-total_surface_area_list = []
 pellet_num = 0
 total_built_volume = 0
+pellet_proportion_list = []
+total_surface_area_list = []
 total_built_volume_list = []
+pickup_rate_list = []
+drop_rate_list = []
 
 # start time
 start_time = time.time()
 # loop over time steps
 for step in tqdm(range(num_steps)):
     # reset variables
-    prop_on_floor = 0
     removed_indices = []
     # generate randoms for cycle
     random_values = np.random.random(num_agents)
     # create transition matrix and take power
     index_dict, vertices, T = construct_rw_sparse_matrix(surface.graph)
     Tm = sparse_matrix_power(T, m)
-
+    # no pellet num for cycle
+    no_pellet_num_cycle, pellet_num_cycle = num_agents-pellet_num, pellet_num
+    # pickup and drop rates
+    pickup_rate = 0
+    drop_rate = 0
     # loop over all agents
     for agent_key in range(num_agents):
         # get position and remove position from index
@@ -71,11 +75,6 @@ for step in tqdm(range(num_steps)):
         agent_dict[agent_key][0] = random_pos
         has_pellet = agent_dict[agent_key][1]
         removed_indices.append(index_dict[random_pos])
-        
-        # on floor check for stats
-        x,y,z = random_pos
-        if world.grid[x,y,z-1] == 1:
-            prop_on_floor += 1/num_agents
 
         # no pellet
         if has_pellet == 0:
@@ -84,10 +83,14 @@ for step in tqdm(range(num_steps)):
             if material is not None:
                 # update data and surface
                 pellet_num += 1
+                pickup_rate += 1/no_pellet_num_cycle
                 agent_dict[agent_key][1] = 1
+                if material == 2:
+                    total_built_volume -=1
                 surface.update_surface(type='pickup', 
                                         pos=random_pos, 
                                         world=world)
+                
 
         # pellet
         else:
@@ -97,6 +100,7 @@ for step in tqdm(range(num_steps)):
                 # update data
                 pellet_num -= 1
                 total_built_volume += 1
+                drop_rate += 1/pellet_num_cycle
                 agent_dict[agent_key] = [new_pos, 0]
                 # also remove new position if it is in index dict
                 if new_pos in index_dict:
@@ -109,9 +113,10 @@ for step in tqdm(range(num_steps)):
     # collect data
     if collect_data:
         pellet_proportion_list.append(pellet_num/num_agents)
-        floor_proportion_list.append(prop_on_floor)
         total_surface_area_list.append(len(surface.graph.keys()))
         total_built_volume_list.append(total_built_volume)
+        pickup_rate_list.append(pickup_rate)
+        drop_rate_list.append(drop_rate)
 
     # if render images
     if render_images:
@@ -135,9 +140,10 @@ if collect_data:
     data_dict = {
         'params':params,
         'steps':steps,
-        'proportion pellet':pellet_proportion_list,
-        'proportion floor':floor_proportion_list,
-        'surface area':total_surface_area_list,
+        'proportion_pellet':pellet_proportion_list,
+        'pickup_rate':pickup_rate_list,
+        'drop_rate':drop_rate_list,
+        'surface_area':total_surface_area_list,
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)

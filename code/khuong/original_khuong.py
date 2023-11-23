@@ -44,11 +44,12 @@ if render_images:
     mlab.options.offscreen = True
 
 # data storage
-pellet_proportion_list = []
-on_floor_proportion_list = []
 pellet_num = 0
 total_built_volume = 0
+pellet_proportion_list = []
 total_built_volume_list = []
+pickup_rate_list = []
+drop_rate_list = []
 
 # start time
 start_time = time.time()
@@ -56,7 +57,11 @@ start_time = time.time()
 for step in tqdm(range(num_steps)):
     # reset variables and generate randoms
     x_random = np.random.rand(num_agents)
-    prop_on_floor = 0
+    # no pellet num for cycle
+    no_pellet_num_cycle, pellet_num_cycle = num_agents-pellet_num, pellet_num
+    # pickup and drop rates
+    pickup_rate = 0
+    drop_rate = 0
     # loop over agents
     for i in range(num_agents):
         # movement rule
@@ -65,10 +70,6 @@ for step in tqdm(range(num_steps)):
         x,y,z = final_pos
         agent_dict[i][0] = (x, y, z)
 
-        # statistics
-        if world.grid[x,y,z-1] == 1:
-            prop_on_floor += 1/num_agents
-
         # pickup algorithm
         if agent_dict[i][1]==0:
             pos = agent_dict[i][0]
@@ -76,9 +77,10 @@ for step in tqdm(range(num_steps)):
             if material is not None:
                 # make data updates
                 pellet_num += 1
+                pickup_rate += 1/no_pellet_num_cycle
                 agent_dict[i][1] = 1
                 if material == 2:
-                    total_built_volume +=1
+                    total_built_volume -=1
 
         # drop algorithm
         else:
@@ -88,6 +90,7 @@ for step in tqdm(range(num_steps)):
                 # make data updates
                 world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
                 pellet_num -= 1
+                drop_rate += 1/pellet_num_cycle
                 agent_dict[i][1] = 0
                 agent_dict[i][0] = new_pos
                 total_built_volume += 1
@@ -95,8 +98,9 @@ for step in tqdm(range(num_steps)):
     # collect data
     if collect_data:
         pellet_proportion_list.append(pellet_num/num_agents)
-        on_floor_proportion_list.append(prop_on_floor)
         total_built_volume_list.append(total_built_volume)
+        pickup_rate_list.append(pickup_rate)
+        drop_rate_list.append(drop_rate)
 
     # render images
     if render_images:
@@ -119,8 +123,9 @@ if collect_data:
     data_dict = {
         'params':params,
         'steps':steps,
-        'proportion pellet':pellet_proportion_list,
-        'proportion floor':on_floor_proportion_list,
+        'proportion_pellet':pellet_proportion_list,
+        'pickup_rate':pickup_rate_list,
+        'drop_rate':drop_rate_list,
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)

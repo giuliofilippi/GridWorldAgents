@@ -37,50 +37,50 @@ if render_images:
     mlab.options.offscreen = True
 
 # data storage
-pellet_proportion_list = []
-floor_proportion_list = []
-total_surface_area_list = []
 total_built_volume = 0
+pellet_proportion_list = []
+total_surface_area_list = []
 total_built_volume_list = []
+pickup_rate_list = []
+drop_rate_list = []
 
 # start time
 start_time = time.time()
 # loop over time steps
 for step in tqdm(range(num_steps)):
     # reset variables and generate random values
-    prop_on_floor = 0
     random_values = np.random.random(num_agents)
     # generate random positions synchronously
     vertex_list = list(surface.graph.keys())
     p = surface.get_rw_stationary_distribution()
     random_positions = random_choices(vertex_list, size=num_agents, p=p)
-    # fix no pellet num for cycle
-    pellet_num_cycle = pellet_num
+    # no pellet num for cycle
+    no_pellet_num_cycle, pellet_num_cycle = num_agents-pellet_num, pellet_num
+    # pickup and drop rates
+    pickup_rate = 0
+    drop_rate = 0
     # loop over permuted agents
     permutation = np.random.permutation(num_agents)
     for i in permutation:
         # random position
         random_pos = random_positions[i]
         x,y,z = random_pos
-
-        # on floor check for stats
-        if world.grid[x,y,z-1] == 1:
-            prop_on_floor += 1/num_agents
         
         # no pellet agents
-        if i >= pellet_num_cycle:
+        if i < no_pellet_num_cycle:
             # pickup algorithm
             pos = random_pos
             material = pickup_algorithm(pos, world, x_rand=random_values[i])
             if material is not None:
                 # make data updates
                 pellet_num += 1
+                pickup_rate += 1/no_pellet_num_cycle
                 if material == 2:
-                    total_built_volume +=1
+                    total_built_volume -=1
                 surface.update_surface(type='pickup', 
                                             pos=random_pos, 
                                             world=world)
-
+                
         # pellet agents
         else:
             pos = random_pos
@@ -89,6 +89,7 @@ for step in tqdm(range(num_steps)):
                 # update data and surface
                 total_built_volume += 1
                 pellet_num -= 1
+                drop_rate += 1/pellet_num_cycle
                 surface.update_surface(type='drop', 
                                             pos=random_pos, 
                                             world=world)
@@ -96,9 +97,10 @@ for step in tqdm(range(num_steps)):
     # collect data
     if collect_data:
         pellet_proportion_list.append(pellet_num/num_agents)
-        floor_proportion_list.append(prop_on_floor)
         total_surface_area_list.append(len(surface.graph.keys()))
         total_built_volume_list.append(total_built_volume)
+        pickup_rate_list.append(pickup_rate)
+        drop_rate_list.append(drop_rate)
 
     # render images
     if render_images:
@@ -120,9 +122,10 @@ if collect_data:
     data_dict = {
         'params':params,
         'steps':steps,
-        'proportion pellet':pellet_proportion_list,
-        'proportion floor':floor_proportion_list,
-        'surface area':total_surface_area_list,
+        'proportion_pellet':pellet_proportion_list,
+        'pickup_rate':pickup_rate_list,
+        'drop_rate':drop_rate_list,
+        'surface_area':total_surface_area_list,
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)
