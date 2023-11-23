@@ -17,8 +17,10 @@ from functions import (random_initial_config,
 # algorithms
 from khuong_algorithms import (
     move_algorithm,
+    move_algorithm_new,
     pickup_algorithm,
-    drop_algorithm)
+    drop_algorithm,
+    drop_algorithm_new)
 
 # initialize world and agents
 world = World(200, 200, 200, 20) # 200, 200, 200, 20
@@ -59,7 +61,7 @@ for step in tqdm(range(num_steps)):
     for i in range(num_agents):
         # movement rule
         pos = agent_dict[i][0]
-        final_pos = move_algorithm(pos, world, m)
+        final_pos = move_algorithm_new(pos, world, m)
         x,y,z = final_pos
         agent_dict[i][0] = (x, y, z)
 
@@ -81,7 +83,7 @@ for step in tqdm(range(num_steps)):
         # drop algorithm
         else:
             pos = agent_dict[i][0]
-            new_pos = drop_algorithm(pos, world, step, decay_rate, x_rand = x_random[i])
+            new_pos = drop_algorithm_new(pos, world, step, decay_rate, x_rand = x_random[i])
             if new_pos is not None:
                 # make data updates
                 world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2

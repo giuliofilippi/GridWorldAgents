@@ -4,13 +4,16 @@ sys.path.append('code')
 
 # imports
 import numpy as np
+import random
 
 # classes and functions
 from classes import World
 from functions import (random_choices,
                        local_grid_data,
                        valid_moves,
-                       compute_height)
+                       compute_height,
+                       neighbour_directions,
+                       center_loc)
 
 # skew normal distribution cdf
 from scipy.stats import skewnorm
@@ -126,10 +129,43 @@ def move_algorithm(pos, world, m):
     # return final position
     return (pos[0], pos[1], pos[2])
 
+# move algorithm new
+def move_algorithm_new(pos, world, m):
+    """
+    Executes the move algorithm by taking tentative moves.
+    Runs stochastically faster than previous move algorithm.
+
+    Parameters:
+    - pos: Current position.
+    - world: The World object.
+    - m: Number of moves.
+
+    Returns:
+    - Final position after moving.
+    """
+    for j in range(m):
+        x,y,z = pos
+        permutation = np.random.permutation(6)
+        local_data = local_grid_data(pos, world)
+        for i in permutation:
+            dir = neighbour_directions[i]
+            new_loc_pos = center_loc + dir
+            if local_data[new_loc_pos[0], new_loc_pos[1], new_loc_pos[2]]==0:
+                # slice lower bounds
+                x_low_bound = max(0, new_loc_pos[0]-1)
+                y_low_bound = max(0, new_loc_pos[1]-1)
+                z_low_bound = max(0, new_loc_pos[2]-1)
+                # sliced array
+                new_local_data = local_data[x_low_bound:new_loc_pos[0]+2, y_low_bound:new_loc_pos[1]+2, z_low_bound:new_loc_pos[2]+2]
+                # check for any material
+                if (new_local_data>0).any():
+                    pos = (x+dir[0], y+dir[1], z+dir[2])
+    return pos
+
 # pickup algorithm
 def pickup_algorithm(pos, world, x_rand):
     """
-    Executes the pickup algorithm.
+    Executes the pickup algorithm. Cannot be optimized further.
 
     Parameters:
     - pos: Current position.
@@ -155,7 +191,7 @@ def pickup_algorithm(pos, world, x_rand):
 # drop algorithm
 def drop_algorithm(pos, world, step, decay_rate, x_rand):
     """
-    Executes the drop algorithm.
+    Executes the drop algorithm. Optimizable?
 
     Parameters:
     - pos: Current position.
@@ -169,7 +205,7 @@ def drop_algorithm(pos, world, step, decay_rate, x_rand):
     """
     x,y,z = pos
     v26 = local_grid_data(pos, world)
-    moves = valid_moves(v26)
+    moves = valid_moves(v26) # more expensive to get valid moves first...
     # only act if there is an available move
     if len(moves)>0:
         N = np.sum(v26==2)
@@ -192,10 +228,61 @@ def drop_algorithm(pos, world, step, decay_rate, x_rand):
     # if no drop occureed return None
     return None
 
+# drop algorithm new version
+def drop_algorithm_new(pos, world, step, decay_rate, x_rand):
+    """
+    Executes the drop algorithm.
+    Runs a tiny bit faster than previous one.
+
+    Parameters:
+    - pos: Current position.
+    - world: The World object.
+    - step: Current step.
+    - decay_rate: Rate of decay.
+    - x_rand: Random variable.
+
+    Returns:
+    - New position after dropping or None.
+    """
+    x,y,z = pos
+    v26 = local_grid_data(pos, world)
+    N = np.sum(v26==2)
+    # slice lower bounds
+    x_low_bound, y_low_bound, z_low_bound  = max(0, x-1), max(0, y-1), max(0, z-1)
+    t_latest = np.max(world.times[x_low_bound:x+2,y_low_bound:y+2,z_low_bound:z+2])
+    t_now = step
+    h = compute_height(pos, world)
+    prob = prob_drop(N, t_now, t_latest, decay_rate, h)
+    if x_rand < prob:
+        # permutation for moving
+        permutation = np.random.permutation(6)
+        for i in permutation:
+            dir = neighbour_directions[i]
+            new_loc_pos = center_loc + dir
+            if v26[new_loc_pos[0], new_loc_pos[1], new_loc_pos[2]]==0:
+                # slice lower bounds
+                x_low_bound = max(0, new_loc_pos[0]-1)
+                y_low_bound = max(0, new_loc_pos[1]-1)
+                z_low_bound = max(0, new_loc_pos[2]-1)
+                # sliced array
+                new_local_data = v26[x_low_bound:new_loc_pos[0]+2, y_low_bound:new_loc_pos[1]+2, z_low_bound:new_loc_pos[2]+2]
+                # check for any material
+                if (new_local_data>0).any():
+                    new_pos = (x+dir[0], y+dir[1], z+dir[2])
+                    # do the drop
+                    world.grid[x,y,z] = 2
+                    # update time tensor at pos
+                    world.times[x, y, z] = t_now
+                    # return new position
+                    return new_pos
+    # if no drop occureed return None
+    return None
+
 # drop algorithm graph version
 def drop_algorithm_graph(pos, world, graph, step, decay_rate, x_rand):
     """
-    Executes the drop algorithm with a graph.
+    Executes the drop algorithm with a graph. Does not seem to be
+    optimizable.
 
     Parameters:
     - pos: Current position.

@@ -12,7 +12,7 @@ from tqdm import tqdm
 # classes and functions
 from classes import World, Surface
 from functions import (get_initial_graph,
-                       random_choices,
+                       random_initial_config,
                        conditional_random_choice,
                        construct_rw_sparse_matrix,
                        sparse_matrix_power,
@@ -21,9 +21,10 @@ from functions import (get_initial_graph,
 # khuong functions
 from khuong_algorithms import pickup_algorithm, drop_algorithm_graph
 
-# initialize world and surface
+# initialize world, surface and agents
 world = World(200, 200, 200, 20) # 200, 200, 200, 20
 surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
+agent_dict = random_initial_config(world.width, world.length, world.soil_height, num_agents=500)
 
 # khuong params
 num_steps = 1000 # should be 345600 steps (for 96 hours)
@@ -31,10 +32,6 @@ num_agents = 500 # number of agents
 m = 6 # num moves per agent
 lifetime = 1200 # pheromone lifetime in seconds
 decay_rate = 1/lifetime # decay rate nu_m
-
-# initialize agent lists
-p_agents = []
-np_agents = random_choices(list(surface.graph.keys()), num_agents)
 
 # extra params
 collect_data = True
@@ -57,25 +54,22 @@ start_time = time.time()
 for step in tqdm(range(num_steps)):
     # reset variables
     prop_on_floor = 0
-    np_num, p_num = len(np_agents), len(p_agents)
-    new_np_agents = []
-    new_p_agents = []
     removed_indices = []
     # generate randoms for cycle
-    random_values_0 = np.random.random(np_num)
-    random_values_1 = np.random.random(p_num)
+    random_values = np.random.random(num_agents)
     # create transition matrix and take power
     index_dict, vertices, T = construct_rw_sparse_matrix(surface.graph)
     Tm = sparse_matrix_power(T, m)
 
-    # pickup algorithm
-    for i in range(np_num):
-        # position
-        prob_dist = Tm[index_dict[np_agents[i]]].toarray().flatten()
+    # loop over all agents
+    for agent_key in range(num_agents):
+        # get position and remove position from index
+        prob_dist = Tm[index_dict[agent_dict[agent_key][0]]].toarray().flatten()
         random_pos = conditional_random_choice(vertices,
                                                 p = prob_dist, 
                                                 removed_indices=removed_indices)
-        # remove position from index
+        agent_dict[agent_key][0] = random_pos
+        has_pellet = agent_dict[agent_key][1]
         removed_indices.append(index_dict[random_pos])
         
         # on floor check for stats
@@ -83,54 +77,34 @@ for step in tqdm(range(num_steps)):
         if world.grid[x,y,z-1] == 1:
             prop_on_floor += 1/num_agents
 
-        # pickup algorithm
-        material = pickup_algorithm(random_pos, world, x_rand=random_values_0[i])
-        if material is not None:
-            # update data and surface
-            pellet_num += 1
-            new_p_agents.append((x,y,z))
-            surface.update_surface(type='pickup', 
-                                    pos=random_pos, 
-                                    world=world)
+        # no pellet
+        if has_pellet == 0:
+            # pickup algorithm
+            material = pickup_algorithm(random_pos, world, x_rand=random_values[agent_key])
+            if material is not None:
+                # update data and surface
+                pellet_num += 1
+                agent_dict[agent_key][1] = 1
+                surface.update_surface(type='pickup', 
+                                        pos=random_pos, 
+                                        world=world)
+
+        # pellet
         else:
-            new_np_agents.append((x,y,z))
- 
-    # drop algorithm
-    for j in range(p_num):
-        # position
-        prob_dist = Tm[index_dict[p_agents[j]]].toarray().flatten()
-        random_pos = conditional_random_choice(vertices,
-                                                p = prob_dist, 
-                                                removed_indices=removed_indices)
-        # remove position from index
-        removed_indices.append(index_dict[random_pos])
-
-        # on floor check for stats
-        x, y, z = random_pos
-        if world.grid[x,y,z-1] == 1:
-            prop_on_floor += 1/num_agents
-
-        # drop algorithm
-        new_pos = drop_algorithm_graph(random_pos, world, surface.graph, step, decay_rate, x_rand = random_values_1[j])
-        if new_pos is not None:
-            # update data
-            pellet_num -= 1
-            total_built_volume+=1
-            new_np_agents.append(new_pos)
-            # also remove new position if it is in index dict
-            if new_pos in index_dict:
-                removed_indices.append(index_dict[new_pos])
-            # update surface
-            surface.update_surface(type='drop', 
-                                    pos=random_pos, 
-                                    world=world)
-        else:
-            # append to p agents because didnt drop
-            new_p_agents.append(random_pos)
-
-    # reset variables for next loop
-    np_agents = new_np_agents
-    p_agents = new_p_agents
+            # drop algorithm
+            new_pos = drop_algorithm_graph(random_pos, world, surface.graph, step, decay_rate, x_rand=random_values[agent_key])
+            if new_pos is not None:
+                # update data
+                pellet_num -= 1
+                total_built_volume += 1
+                agent_dict[agent_key] = [new_pos, 0]
+                # also remove new position if it is in index dict
+                if new_pos in index_dict:
+                    removed_indices.append(index_dict[new_pos])
+                # update surface
+                surface.update_surface(type='drop', 
+                                        pos=random_pos, 
+                                        world=world)
 
     # collect data
     if collect_data:

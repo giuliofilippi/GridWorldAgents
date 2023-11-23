@@ -78,7 +78,7 @@ def random_initial_config(width, lenght, soil_height, num_agents, objects=None):
     - OrderedDict with agent configurations.
     """
     open_initial_positions = []
-    agent_dict = OrderedDict()
+    agent_dict = {} # not ordered
     for i in range(width):
         for j in range(lenght):
             open_initial_positions.append((i,j,soil_height))
@@ -92,6 +92,7 @@ def random_initial_config(width, lenght, soil_height, num_agents, objects=None):
 def local_grid_data(pos, world):
     """
     Retrieves local grid data from a position in the world.
+    Does not seem to be optimizable.
 
     Parameters:
     - pos: Position in the world.
@@ -125,6 +126,7 @@ def local_grid_data(pos, world):
 def compute_height(pos, world):
     """
     Computes the height (number of empty cells below) for a given position in the world.
+    Does not seem to be optimizable.
 
     Parameters:
     - pos: Position in the world.
@@ -148,6 +150,7 @@ def compute_height(pos, world):
 def valid_move_directions(local_data):
     """
     Returns valid move directions based on local data.
+    Optimizable in the sense that we could return as we search randomly.
 
     Parameters:
     - local_data: Local data tensor.
@@ -175,6 +178,7 @@ def valid_move_directions(local_data):
 def voxel_shares_face_with_material(local_data):
     """
     Checks if neighbors share a face with some material.
+    Does not seem to be optimizable.
 
     Parameters:
     - local_data: Local data tensor.
@@ -191,6 +195,7 @@ def voxel_shares_face_with_material(local_data):
 def valid_actions(local_data, has_pellet):
     """
     Returns a list of valid actions based on local data and whether the agent has a pellet.
+    I dont use this much anymore.
 
     Parameters:
     - local_data: Local data tensor.
@@ -223,6 +228,7 @@ def valid_actions(local_data, has_pellet):
 def valid_moves(local_data):
     """
     Returns a list of valid move actions based on local data.
+    I dont use this much anymore.
 
     Parameters:
     - local_data: Local data tensor.
@@ -277,6 +283,7 @@ def get_initial_graph(width, lenght, soil_height):
 def get_neighbours(pos, graph):
     """
     Retrieves neighbors of a voxel given the current graph.
+    Does not seem to be optimizable.
 
     Parameters:
     - pos: Position in the world.
@@ -288,7 +295,7 @@ def get_neighbours(pos, graph):
     neighbours = []
     # loop over potential neighbours
     for dir in neighbour_directions:
-        new_pos = tuple(np.array(pos)+dir)
+        new_pos = (pos[0]+dir[0],pos[1]+dir[1],pos[2]+dir[2])
         # check if is in graph
         if new_pos in graph:
             # if yes, append
@@ -299,6 +306,7 @@ def get_neighbours(pos, graph):
 def update_surface_function(surface, type, pos, world):
     """
     Updates the surface graph based on a specific action type.
+    Does not seem to be optimizable.
 
     Parameters:
     - surface: Surface object.
@@ -328,9 +336,8 @@ def update_surface_function(surface, type, pos, world):
         new_vertices = []
         # loop over 3D directions
         for dir in neighbour_directions_3d:
-            # new vertex positions
-            new_pos = np.array(pos) + dir
-            new_vertex = tuple(new_pos)
+            # new vertex position
+            new_vertex = (pos[0]+dir[0],pos[1]+dir[1],pos[2]+dir[2])
             # check in bounds
             if 0<=new_vertex[0]<world.width and 0<=new_vertex[1]<world.length and 0<=new_vertex[2]<world.height:
                 # check empty
@@ -358,6 +365,7 @@ def update_surface_function(surface, type, pos, world):
 def random_choices(ls, size=1, p=None):
     """
     Performs random choices from a list with or without given probabilities.
+    Does not seem to be optimizable.
 
     Parameters:
     - ls: List of elements.
@@ -382,6 +390,7 @@ def random_choices(ls, size=1, p=None):
 def conditional_random_choice(ls, p=None, removed_indices=None):
     """
     Performs a random choice with a condition on the probabilities.
+    Does not seem to be optimizable.
 
     Parameters:
     - ls: List of elements (tuples).
@@ -406,6 +415,7 @@ def conditional_random_choice(ls, p=None, removed_indices=None):
 def dual_random_choices(ls, size0, size1, prob0, prob1=None):
     """
     Performs random choices from two distributions.
+    I dont use this anymore.
 
     Parameters:
     - ls: List of elements.
@@ -455,6 +465,7 @@ def dual_random_choices(ls, size0, size1, prob0, prob1=None):
 def construct_rw_sparse_matrix(graph):
     """
     Constructs a sparse matrix representation for a given graph.
+    This is expensive, but I dont know if I can optimize it.
 
     Parameters:
     - graph: Graph representing the world.
@@ -496,6 +507,7 @@ def construct_rw_sparse_matrix(graph):
 def sparse_matrix_power(A, m):
     """
     Computes the power of a sparse matrix using repeated squaring.
+    This is expensive, but I dont know if I can optimize it.
 
     Parameters:
     - A: Sparse matrix.
@@ -519,6 +531,7 @@ def sparse_matrix_power(A, m):
 def cross_entropy(p_emp, p_stat, epsilon=1e-15):
     """
     Compute cross entropy between true labels and predicted labels with additive smoothing.
+    Never used.
 
     Parameters:
     - p_emp: true probability distribution (as a numpy array)

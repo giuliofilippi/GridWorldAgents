@@ -56,8 +56,9 @@ for step in tqdm(range(num_steps)):
     random_positions = random_choices(vertex_list, size=num_agents, p=p)
     # fix no pellet num for cycle
     pellet_num_cycle = pellet_num
-    # loop over agents
-    for i in range(num_agents):
+    # loop over permuted agents
+    permutation = np.random.permutation(num_agents)
+    for i in permutation:
         # random position
         random_pos = random_positions[i]
         x,y,z = random_pos
