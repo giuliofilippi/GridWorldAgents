@@ -566,7 +566,7 @@ def render(world, show=True, save=False, name="image_1.png"):
     basic = {
         1: (1, 1, 1),    # Soil
         -1: (1, 0, 0),    # Objects
-        #-2:(0, 0, 1),    # Agents
+        -2:(0, 0, 1),    # Agents
         2:(1, 0.75, 0) # Built structure
         }
     gradient ={

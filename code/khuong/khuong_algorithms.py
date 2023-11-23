@@ -4,7 +4,6 @@ sys.path.append('code')
 
 # imports
 import numpy as np
-import random
 
 # classes and functions
 from classes import World
@@ -94,7 +93,7 @@ def prob_drop(N, t_now, t_latest, decay_rate, h):
     # see paper for formula
     prob = 1 - np.e**(-eta_d(N)*np.e**(-tau*decay_rate))
     if h>0:
-        # add vertical modulation for height h>0 in mm
+        # add vertical modulation for height h>1 in mm
         prob = prob*mod_list[h]
     # return
     return prob
@@ -135,6 +134,7 @@ def move_algorithm_new(pos, world, m):
     Executes the move algorithm by taking tentative moves.
     Runs stochastically faster than previous move algorithm.
 
+
     Parameters:
     - pos: Current position.
     - world: The World object.
@@ -150,16 +150,59 @@ def move_algorithm_new(pos, world, m):
         for i in permutation:
             dir = neighbour_directions[i]
             new_loc_pos = center_loc + dir
-            if local_data[new_loc_pos[0], new_loc_pos[1], new_loc_pos[2]]==0:
+            if local_data[new_loc_pos[0], new_loc_pos[1], new_loc_pos[2]] == 0:
                 # slice lower bounds
                 x_low_bound = max(0, new_loc_pos[0]-1)
                 y_low_bound = max(0, new_loc_pos[1]-1)
                 z_low_bound = max(0, new_loc_pos[2]-1)
                 # sliced array
-                new_local_data = local_data[x_low_bound:new_loc_pos[0]+2, y_low_bound:new_loc_pos[1]+2, z_low_bound:new_loc_pos[2]+2]
+                new_local_data = local_data[x_low_bound:new_loc_pos[0]+2, 
+                                            y_low_bound:new_loc_pos[1]+2, 
+                                            z_low_bound:new_loc_pos[2]+2]
                 # check for any material
                 if (new_local_data>0).any():
                     pos = (x+dir[0], y+dir[1], z+dir[2])
+                    break
+
+    return pos
+
+# move algorithm ghost
+def move_algorithm_ghost(pos, world, m):
+    """
+    Executes the move algorithm by taking tentative moves.
+    Runs stochastically faster than previous move algorithm.
+    Ghost mode.
+
+    Parameters:
+    - pos: Current position.
+    - world: The World object.
+    - m: Number of moves.
+
+    Returns:
+    - Final position after moving.
+    """
+    for j in range(m):
+        x,y,z = pos
+        permutation = np.random.permutation(6)
+        local_data = local_grid_data(pos, world)
+        for i in permutation:
+            dir = neighbour_directions[i]
+            new_loc_pos = center_loc + dir
+            valid = [0] if j==m else [0,-2]
+            if local_data[new_loc_pos[0], new_loc_pos[1], new_loc_pos[2]] in valid:
+                # slice lower bounds
+                x_low_bound = max(0, new_loc_pos[0]-1)
+                y_low_bound = max(0, new_loc_pos[1]-1)
+                z_low_bound = max(0, new_loc_pos[2]-1)
+                # sliced array
+                new_local_data = local_data[x_low_bound:new_loc_pos[0]+2, 
+                                            y_low_bound:new_loc_pos[1]+2, 
+                                            z_low_bound:new_loc_pos[2]+2]
+                # check for any material
+                if (new_local_data>0).any():
+                    pos = (x+dir[0], y+dir[1], z+dir[2])
+                    break
+
     return pos
 
 # pickup algorithm

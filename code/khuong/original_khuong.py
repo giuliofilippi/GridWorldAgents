@@ -18,6 +18,7 @@ from functions import (random_initial_config,
 from khuong_algorithms import (
     move_algorithm,
     move_algorithm_new,
+    move_algorithm_ghost,
     pickup_algorithm,
     drop_algorithm,
     drop_algorithm_new)
@@ -32,7 +33,7 @@ for agent,item in agent_dict.items():
 # khuong params
 num_steps = 1000 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
-m = 6 # should be 1500 num moves per agent
+m = 20 # should be 1500 num moves per agent
 lifetime = 1200 # phermone lifetime
 decay_rate = 1/lifetime # decay rate
 
@@ -66,7 +67,7 @@ for step in tqdm(range(num_steps)):
     for i in range(num_agents):
         # movement rule
         pos = agent_dict[i][0]
-        final_pos = move_algorithm_new(pos, world, m)
+        final_pos = move_algorithm_ghost(pos, world, m)
         x,y,z = final_pos
         agent_dict[i][0] = (x, y, z)
 
@@ -91,8 +92,7 @@ for step in tqdm(range(num_steps)):
                 world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
                 pellet_num -= 1
                 drop_rate += 1/pellet_num_cycle
-                agent_dict[i][1] = 0
-                agent_dict[i][0] = new_pos
+                agent_dict[i] = [new_pos, 0]
                 total_built_volume += 1
 
     # collect data
