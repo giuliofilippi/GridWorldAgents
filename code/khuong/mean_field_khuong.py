@@ -21,7 +21,7 @@ world = World(200, 200, 200, 20) # 200, 200, 200, 20
 surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
 
 # khuong params
-num_steps = 1000 # should be 345600 steps (96 hours)
+num_steps = 345600 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
 pellet_num = 0 # number of agents with pellet in beginning
 lifetime = 1200
@@ -102,7 +102,7 @@ for step in tqdm(range(num_steps)):
 
     # render images
     if render_images:
-        if step % (60) == 0:
+        if step % (10*60) == 0:
             np.save(file="./exports/tensors/meanfield_{}".format(step+1), arr=world.grid)
 
 # end time
