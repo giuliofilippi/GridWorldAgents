@@ -6,7 +6,6 @@ sys.path.append('code')
 import numpy as np
 import pandas as pd
 import time
-from mayavi import mlab
 from tqdm import tqdm
 
 # classes and functions
@@ -15,8 +14,7 @@ from functions import (get_initial_graph,
                        random_initial_config,
                        conditional_random_choice,
                        construct_rw_sparse_matrix,
-                       sparse_matrix_power,
-                       render)
+                       sparse_matrix_power)
 
 # khuong functions
 from khuong_algorithms import pickup_algorithm, drop_algorithm_graph
@@ -27,18 +25,18 @@ surface = Surface(get_initial_graph(world.width, world.length, world.soil_height
 agent_dict = random_initial_config(world.width, world.length, world.soil_height, num_agents=500)
 
 # khuong params
-num_steps = 1000 # should be 345600 steps (for 96 hours)
+num_steps = 100 # should be 345600 steps (for 96 hours)
 num_agents = 500 # number of agents
-m = 15 # num moves per agent
+m = 5 # num moves per agent
 lifetime = 1200 # pheromone lifetime in seconds
 decay_rate = 1/lifetime # decay rate nu_m
 
 # extra params
 collect_data = True
-render_images = False
+render_images = True
 final_render = False
-if render_images:
-    mlab.options.offscreen = True
+if final_render:
+    from render import render
 
 # data storage
 pellet_num = 0
@@ -120,10 +118,8 @@ for step in tqdm(range(num_steps)):
 
     # if render images
     if render_images:
-        # every 5 minutes
-        if step % (5*60) == 0:
-            # export image
-            render(world, show=False, save=True, name="./exports_image/original_{}.png".format(step+1))
+        if step % (60) == 0:
+            np.save(file="./exports/tensors/markov_{}".format(step+1), arr=world.grid)
 
 # end time
 end_time = time.time()
@@ -147,8 +143,8 @@ if collect_data:
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)
-    df.to_pickle('./exports_data/markov_khuong_data.pkl')
+    df.to_pickle('./exports/dataframes/markov_khuong_data.pkl')
 
 # render world mayavi
 if final_render:
-    render(world)
+    render(world.grid)

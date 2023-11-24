@@ -6,14 +6,12 @@ sys.path.append('code')
 import numpy as np
 import pandas as pd
 import time
-from mayavi import mlab
 from tqdm import tqdm
 
 # classes and functions
 from classes import World, Surface
 from functions import (get_initial_graph,
-                       random_choices,
-                       render)
+                       random_choices)
 
 # algorithms
 from khuong_algorithms import pickup_algorithm, drop_algorithm_graph
@@ -23,7 +21,7 @@ world = World(200, 200, 200, 20) # 200, 200, 200, 20
 surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
 
 # khuong params
-num_steps = 345600 # should be 345600 steps (96 hours)
+num_steps = 1000 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
 pellet_num = 0 # number of agents with pellet in beginning
 lifetime = 1200
@@ -33,8 +31,8 @@ decay_rate = 1/lifetime
 collect_data = True
 render_images = True
 final_render = False
-if render_images:
-    mlab.options.offscreen = True
+if final_render:
+    from render import render
 
 # data storage
 total_built_volume = 0
@@ -104,9 +102,8 @@ for step in tqdm(range(num_steps)):
 
     # render images
     if render_images:
-        # every minute
-        if step % (5*60) == 0:
-            render(world, show=False, save=True, name="./exports_image/original_{}.png".format(step+1))
+        if step % (60) == 0:
+            np.save(file="./exports/tensors/meanfield_{}".format(step+1), arr=world.grid)
 
 # end time
 end_time = time.time()
@@ -129,8 +126,8 @@ if collect_data:
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)
-    df.to_pickle('./exports_data/mean_field_khuong_data.pkl')
+    df.to_pickle('./exports/dataframes/meanfield_khuong_data.pkl')
 
 # render world mayavi
 if final_render:
-    render(world)
+    render(world.grid)

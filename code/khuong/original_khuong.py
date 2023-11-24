@@ -6,13 +6,11 @@ sys.path.append('code')
 import numpy as np
 import pandas as pd
 import time
-from mayavi import mlab
 from tqdm import tqdm
 
 # classes and functions
 from classes import World
-from functions import (random_initial_config,
-                       render)
+from functions import (random_initial_config)
 
 # algorithms
 from khuong_algorithms import (
@@ -31,18 +29,18 @@ for agent,item in agent_dict.items():
     world.grid[pos[0],pos[1],pos[2]] = -2
 
 # khuong params
-num_steps = 1000 # should be 345600 steps (96 hours)
+num_steps = 100 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
-m = 20 # should be 1500 num moves per agent
+m = 5 # should be 1500 num moves per agent
 lifetime = 1200 # phermone lifetime
 decay_rate = 1/lifetime # decay rate
 
 # extra params
 collect_data = True
-render_images = False
+render_images = True
 final_render = False
-if render_images:
-    mlab.options.offscreen = True
+if final_render:
+    from render import render
 
 # data storage
 pellet_num = 0
@@ -104,9 +102,8 @@ for step in tqdm(range(num_steps)):
 
     # render images
     if render_images:
-        # every minute
-        if step % (5*60) == 0:
-            render(world, show=False, save=True, name="./exports_image/original_{}.png".format(step+1))
+        if step % (60) == 0:
+            np.save(file="./exports/tensors/original_{}".format(step+1), arr=world.grid)
 
 # end time
 end_time = time.time()
@@ -129,8 +126,8 @@ if collect_data:
         'volume':total_built_volume_list
     }
     df = pd.DataFrame(data_dict)
-    df.to_pickle('./exports_data/original_khuong_data.pkl')
+    df.to_pickle('./exports/dataframes/original_khuong_data.pkl')
 
 # render world mayavi
 if final_render:
-    render(world)
+    render(world.grid)

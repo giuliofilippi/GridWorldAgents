@@ -2,7 +2,6 @@
 # ------------------------------------------
 
 import numpy as np
-from mayavi import mlab
 from collections import OrderedDict
 import scipy.sparse as sp
 
@@ -545,57 +544,3 @@ def cross_entropy(p_emp, p_stat, epsilon=1e-15):
     p_stat = np.clip(p_stat, epsilon, 1 - epsilon)  # Clip probabilities to avoid log(0)
     return -np.sum(p_emp * np.log(p_stat))
 
-
-# ------------ Render functions ----------------
-# ----------------------------------------------
-
-# render world and agents with mayavi
-def render(world, show=True, save=False, name="image_1.png"):
-    """
-    Renders the world and agents using Mayavi for visualization.
-
-    Parameters:
-    - world: The world object.
-    - show: Whether to display the visualization.
-    - save: Whether to save the visualization.
-    - name: Name of the saved image.
-    """
-    # figure
-    fig = mlab.figure(size=(1024, 1024))
-    # Define colors based on your values
-    basic = {
-        1: (1, 1, 1),    # Soil
-        -1: (1, 0, 0),    # Objects
-        -2:(0, 0, 1),    # Agents
-        2:(1, 0.75, 0) # Built structure
-        }
-    gradient ={
-        #2: 'Greys',  # Pellets
-    }
-    # plotting voxels
-    for value, color in basic.items():
-        x_vals, y_vals, z_vals = np.where(world.grid == value)
-        mlab.points3d(x_vals, y_vals, z_vals,
-                        mode="cube",
-                        color=color,
-                        scale_factor=1)
-    
-    # plotting gradients
-    for value, colormap in gradient.items():
-        x_vals, y_vals, z_vals = np.where(world.grid == value)
-        scalar_values = world.pheromones[x_vals, y_vals, z_vals]
-        pts = mlab.points3d(x_vals, y_vals, z_vals,
-                      scalar_values,
-                      mode="cube",
-                      scale_mode='none',  # To keep the original cube size
-                      colormap=colormap,
-                      scale_factor=1,
-                      vmin = -0.3,
-                      vmax = 1.3)
-    # save image
-    if save:
-        mlab.savefig(name)
-        mlab.close()
-    # show image
-    if show:
-        mlab.show()
