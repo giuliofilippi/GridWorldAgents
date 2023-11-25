@@ -489,12 +489,15 @@ def construct_rw_sparse_matrix(graph):
     for i, vertex in enumerate(vertices):
         nbrs = graph[vertex]
         num_nbrs = len(nbrs)
-        if num_nbrs == 0:
-            print (vertex)
-        map_nbrs = [index_dict[v] for v in nbrs]
-        row_indices.extend([i] * num_nbrs)
-        col_indices.extend(map_nbrs)
-        data.extend([1 / num_nbrs] * num_nbrs)
+        map_nbrs = [index_dict[v] for v in nbrs]   
+        if num_nbrs>0:
+            row_indices.extend([i] * num_nbrs)
+            col_indices.extend(map_nbrs)
+            data.extend([1 / num_nbrs] * num_nbrs)
+        else:
+            row_indices.extend([i])
+            col_indices.extend([i])
+            data.extend([1 / num_nbrs] * num_nbrs)
 
     # build T
     T = sp.coo_matrix((data, (row_indices, col_indices)), shape=(num_vertices, num_vertices)).tocsr()
