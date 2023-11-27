@@ -6,7 +6,6 @@ sys.path.append('code')
 import numpy as np
 
 # classes and functions
-from classes import World
 from functions import (random_choices,
                        local_grid_data,
                        valid_moves,
@@ -122,8 +121,6 @@ def move_algorithm(pos, world, m):
             chosen_move = random_choices(moves)[0]
             new_pos = np.array(pos)+chosen_move[1]
             # do the step
-            world.grid[x,y,z] = 0
-            world.grid[new_pos[0],new_pos[1],new_pos[2]] = -2
             pos = new_pos
     # return final position
     return (pos[0], pos[1], pos[2])

@@ -25,10 +25,10 @@ surface = Surface(get_initial_graph(world.width, world.length, world.soil_height
 agent_dict = random_initial_config(world.width, world.length, world.soil_height, num_agents=500)
 
 # khuong params
-num_steps = 100 # should be 345600 steps (for 96 hours)
+num_steps = 345600 # should be 345600 steps (for 96 hours)
 num_agents = 500 # number of agents
-m = 5 # num moves per agent
-lifetime = 1200 # pheromone lifetime in seconds
+m = 8 # num moves per agent
+lifetime = 1000 # pheromone lifetime in seconds
 decay_rate = 1/lifetime # decay rate nu_m
 
 # extra params
@@ -118,7 +118,7 @@ for step in tqdm(range(num_steps)):
 
     # if render images
     if render_images:
-        if step % (60) == 0:
+        if step % (60*60) == 0:
             np.save(file="./exports/tensors/markov_{}".format(step+1), arr=world.grid)
 
 # end time
