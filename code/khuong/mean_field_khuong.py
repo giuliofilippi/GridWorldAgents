@@ -21,7 +21,7 @@ world = World(200, 200, 200, 20) # 200, 200, 200, 20
 surface = Surface(get_initial_graph(world.width, world.length, world.soil_height))
 
 # khuong params
-num_steps = 345600 # should be 345600 steps (96 hours)
+num_steps = 5000 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
 pellet_num = 0 # number of agents with pellet in beginning
 lifetime = 1000

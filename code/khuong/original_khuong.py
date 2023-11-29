@@ -28,14 +28,14 @@ for agent,item in agent_dict.items():
 # khuong params
 num_steps = 5000 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
-m = 5 # should be 1500 num moves per agent
+m = 15 # should be 1500 num moves per agent
 lifetime = 1000 # phermone lifetime
 decay_rate = 1/lifetime # decay rate
 
 # extra params
-collect_data = False
+collect_data = True
 render_images = False
-final_render = True
+final_render = False
 if final_render:
     from render import render
 

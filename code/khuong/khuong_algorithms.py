@@ -224,7 +224,7 @@ def drop_algorithm(pos, world, step, decay_rate, x_rand):
 def drop_algorithm_new(pos, world, step, decay_rate, x_rand):
     """
     Executes the drop algorithm.
-    Runs a tiny bit faster than previous one?
+    Runs a tiny bit faster than previous one.
 
     Parameters:
     - pos: Current position.
