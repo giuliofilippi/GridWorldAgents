@@ -82,6 +82,7 @@ for step in tqdm(range(num_steps)):
                 # update data and surface
                 pellet_num += 1
                 pickup_rate += 1/no_pellet_num_cycle
+                agent_dict[agent_key][0] = (random_pos[0],random_pos[1],random_pos[2]-1)
                 agent_dict[agent_key][1] = 1
                 if material == 2:
                     total_built_volume -=1

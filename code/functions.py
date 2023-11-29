@@ -173,6 +173,36 @@ def valid_move_directions(local_data):
                 dirs.append(dir)
     return dirs
 
+# returns a random move direction from local data or None
+def random_move_direction(local_data):
+    """
+    Returns valid move directions based on local data.
+    Optimizable in the sense that we could return as we search randomly.
+
+    Parameters:
+    - local_data: Local data tensor.
+
+    Returns:
+    - List of valid move directions.
+    """
+    # permutation for moving
+    permutation = np.random.permutation(6)
+    # loop over 6 neighbours
+    for i in permutation:
+        dir = neighbour_directions[i]
+        new_pos = center_loc + dir
+        if local_data[new_pos[0], new_pos[1], new_pos[2]]==0:
+            # slice lower bounds
+            x_low_bound = max(0, new_pos[0]-1)
+            y_low_bound = max(0, new_pos[1]-1)
+            z_low_bound = max(0, new_pos[2]-1)
+            # sliced array
+            new_local_data = local_data[x_low_bound:new_pos[0]+2, y_low_bound:new_pos[1]+2, z_low_bound:new_pos[2]+2]
+            # check for any material
+            if (new_local_data>0).any():
+                return dir
+    return None
+
 # checks neighbours for some material
 def voxel_shares_face_with_material(local_data):
     """

@@ -14,11 +14,8 @@ from functions import (random_initial_config)
 
 # algorithms
 from khuong_algorithms import (
-    move_algorithm,
     move_algorithm_new,
-    move_algorithm_ghost,
     pickup_algorithm,
-    drop_algorithm,
     drop_algorithm_new)
 
 # initialize world and agents
@@ -29,16 +26,16 @@ for agent,item in agent_dict.items():
     world.grid[pos[0],pos[1],pos[2]] = -2
 
 # khuong params
-num_steps = 345600 # should be 345600 steps (96 hours)
+num_steps = 5000 # should be 345600 steps (96 hours)
 num_agents = 500 # number of agents
-m = 8 # should be 1500 num moves per agent
+m = 5 # should be 1500 num moves per agent
 lifetime = 1000 # phermone lifetime
 decay_rate = 1/lifetime # decay rate
 
 # extra params
-collect_data = True
-render_images = True
-final_render = False
+collect_data = False
+render_images = False
+final_render = True
 if final_render:
     from render import render
 
@@ -65,10 +62,8 @@ for step in tqdm(range(num_steps)):
     for i in range(num_agents):
         # movement rule
         pos = agent_dict[i][0]
-        world.grid[pos[0],pos[1],pos[2]]=0 # change position of agent
         final_pos = move_algorithm_new(pos, world, m)
         x,y,z = final_pos # change position of agent
-        world.grid[x,y,z]=-2 # change position of agent
         agent_dict[i][0] = (x, y, z) # change position of agent
 
         # pickup algorithm
@@ -77,9 +72,12 @@ for step in tqdm(range(num_steps)):
             material = pickup_algorithm(pos, world, x_rand=x_random[i])
             if material is not None:
                 # make data updates
+                agent_dict[i][0] = (pos[0], pos[1], pos[2]-1) # change position of agent
+                agent_dict[i][1] = 1 # pellet
+                world.grid[pos[0], pos[1], pos[2]] = 0 # change position of agent
+                world.grid[pos[0], pos[1], pos[2]-1] = -2 # change position of agent
                 pellet_num += 1
                 pickup_rate += 1/no_pellet_num_cycle
-                agent_dict[i][1] = 1
                 if material == 2:
                     total_built_volume -=1
 
@@ -89,10 +87,11 @@ for step in tqdm(range(num_steps)):
             new_pos = drop_algorithm_new(pos, world, step, decay_rate, x_rand = x_random[i])
             if new_pos is not None:
                 # make data updates
+                agent_dict[i][0] = new_pos # change position of agent
+                agent_dict[i][1] = 0 # no pellet
                 world.grid[new_pos[0],new_pos[1],new_pos[2]]=-2 # change position of agent
                 pellet_num -= 1
                 drop_rate += 1/pellet_num_cycle
-                agent_dict[i] = [new_pos, 0]
                 total_built_volume += 1
 
     # collect data
