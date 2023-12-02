@@ -2,6 +2,7 @@
 import numpy as np
 from collections import OrderedDict
 from functions import (update_surface_function,
+                       update_structure_function,
                        construct_rw_sparse_matrix)
 
 # World class
@@ -23,6 +24,9 @@ class World:
     Methods:
     - __init__: Initializes a new instance of the World class.
     - diffuse_tensor: Diffuses a given tensor in the world.
+    - move_agent: moves agent in world
+    - pickup: picks up material
+    - drop: drops material
     """
     # init
     def __init__(self, width, length, height, soil_height, objects=None):
@@ -34,8 +38,8 @@ class World:
         self.objects = objects
         self.grid = np.zeros((width, length, height), dtype=int)
         self.times = np.zeros((width, length, height), dtype=int)
-        self.field = np.zeros((width, length, height), dtype=int)
-        self.pheromones = np.zeros((width, length, height), dtype=int)
+        self.field = np.zeros((width, length, height), dtype=float)
+        self.pheromones = np.zeros((width, length, height), dtype=float)
         # insert soil
         self.grid[:, :, :soil_height] = 1  # Soil
         # insert objects
@@ -123,7 +127,6 @@ class World:
         None
         """
         self.grid[pos[0],pos[1],pos[2]] = 2
-
 
 # Surface class
 class Surface:
@@ -253,3 +256,101 @@ class Surface:
         """
         # see functions for details
         update_surface_function(self, type, pos, world)
+
+# Structure class
+class Structure:
+    """
+    Represents the graph of the built structure.
+
+    Attributes:
+    - graph: Dictionary representing the graph structure.
+
+    Methods:
+    - __init__: Initializes a new instance of the Structure class.
+    - get_num_vertices: Returns the number of vertices in the graph.
+    - get_num_edges: Returns the number of edges in the graph.
+    - add_edge: Adds an edge to the graph.
+    - remove_vertex: Removes a vertex from the graph.
+    - update_structure: Updates the structure based on a specific action type.
+    """
+    # init
+    def __init__(self):
+        # attributes: graph, degrees, num_edges
+        self.graph = OrderedDict()
+
+    # degree of a vertex
+    def get_degree(self, v):
+        """
+        Returns the degree of a vertex in graph.
+
+        Returns:
+        - Number of edges.
+        """
+        return len(self.graph[v])
+
+    # number of vertices
+    def get_num_vertices(self):
+        """
+        Returns the number of vertices in the graph.
+
+        Returns:
+        - Number of vertices.
+        """
+        return(len(self.graph.keys()))
+    
+    # number of edges
+    def get_num_edges(self):
+        """
+        Returns the number of edges in the graph.
+
+        Returns:
+        - Number of edges.
+        """
+        return(np.sum([len(self.graph[v]) for v in self.graph.keys()])/2)
+    
+    # add an edge to graph
+    def add_edge(self, pair):
+        """
+        Adds an edge to the graph.
+
+        Parameters:
+        - pair: Tuple representing the edge.
+
+        Returns:
+        - None.
+        """
+        v1, v2 = pair
+        self.graph[v1].append(v2)
+        self.graph[v2].append(v1)
+
+    # remove vertex from graph
+    def remove_vertex(self, vertex):
+        """
+        Removes a vertex from the graph.
+
+        Parameters:
+        - vertex: Vertex to be removed.
+
+        Returns:
+        - None.
+        """
+        nbrs = self.graph[vertex]
+        for nbr in nbrs:
+            self.graph[nbr].remove(vertex)
+        del self.graph[vertex]
+    
+    # update surface
+    def update_structure(self, type, pos, material=None):
+        """
+        Updates the surface based on a specific action type.
+
+        Parameters:
+        - type: Type of action ('pickup' or 'drop').
+        - pos: Position in the world.
+        - world: The world object.
+
+        Returns:
+        - None
+        """
+        # see functions for details
+        update_structure_function(self, type, pos, material)

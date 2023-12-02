@@ -2,7 +2,6 @@
 # ------------------------------------------
 
 import numpy as np
-from collections import OrderedDict
 import scipy.sparse as sp
 
 # ------------ Useful Lists ----------------
@@ -57,7 +56,6 @@ neighbour_filter = np.array([
         [0, 0, 0]]])
 center_loc = np.array([1,1,1])
 
-
 # ------------ Helper functions ----------------
 # ----------------------------------------------
 
@@ -86,6 +84,41 @@ def random_initial_config(width, lenght, soil_height, num_agents, objects=None):
     for i,pos in enumerate(random_positions):
         agent_dict[i] = [pos,0]
     return agent_dict
+
+# get initial surface graph
+def get_initial_graph(width, lenght, soil_height):
+    """
+    Generates an initial surface graph for a given world.
+
+    Parameters:
+    - width: Width of the space.
+    - length: Length of the space.
+    - soil_height: Height of the soil.
+
+    Returns:
+    - Initial surface graph.
+    """
+    # initialize
+    graph = {}
+    # inside cases
+    for i in range(1,width-1):
+        for j in range(1,lenght-1):
+            graph[(i,j,soil_height)] = [(i-1,j,soil_height),(i,j-1,soil_height),(i+1,j,soil_height),(i,j+1,soil_height)]
+    # sides
+    for j in range(1,lenght-1):
+        graph[(0,j,soil_height)] = [(0,j-1,soil_height),(1,j,soil_height),(0,j+1,soil_height)]
+        graph[(width-1,j,soil_height)] = [(width-1,j-1,soil_height),(width-2,j,soil_height),(width-1,j+1,soil_height)]
+    # sides
+    for i in range(1,width-1):
+        graph[(i,0,soil_height)] = [(i-1,0,soil_height),(i,1,soil_height),(i+1,0,soil_height)]
+        graph[(i,lenght-1,soil_height)] = [(i-1,lenght-1,soil_height),(i,lenght-2,soil_height),(i+1,lenght-1,soil_height)]
+    # corners
+    graph[(0,0,soil_height)] = [(1,0,soil_height),(0,1,soil_height)]
+    graph[(width-1,lenght-1,soil_height)] = [(width-2,lenght-1,soil_height),(width-1,lenght-2,soil_height)]
+    graph[(width-1,0,soil_height)] = [(width-2,0,soil_height),(width-1,1,soil_height)]
+    graph[(0,lenght-1,soil_height)] = [(0,lenght-2,soil_height),(1,lenght-1,soil_height)]
+    # return
+    return graph
 
 # get local grid data from position in world
 def local_grid_data(pos, world):
@@ -177,7 +210,7 @@ def valid_move_directions(local_data):
 def random_move_direction(local_data):
     """
     Returns valid move directions based on local data.
-    Optimizable in the sense that we could return as we search randomly.
+    Runs faster within code because we return as soon as we find.
 
     Parameters:
     - local_data: Local data tensor.
@@ -253,7 +286,7 @@ def valid_actions(local_data, has_pellet):
 
     return action_list
 
-# list of valid moves from local data tensor (TODO)
+# list of valid moves from local data tensor
 def valid_moves(local_data):
     """
     Returns a list of valid move actions based on local data.
@@ -272,41 +305,6 @@ def valid_moves(local_data):
         for dir in move_directions:
             action_list.append(('move',dir)) # movements
     return action_list
-
-# get initial surface graph
-def get_initial_graph(width, lenght, soil_height):
-    """
-    Generates an initial surface graph for a given world.
-
-    Parameters:
-    - width: Width of the space.
-    - length: Length of the space.
-    - soil_height: Height of the soil.
-
-    Returns:
-    - Initial surface graph.
-    """
-    # initialize
-    graph = {}
-    # inside cases
-    for i in range(1,width-1):
-        for j in range(1,lenght-1):
-            graph[(i,j,soil_height)] = [(i-1,j,soil_height),(i,j-1,soil_height),(i+1,j,soil_height),(i,j+1,soil_height)]
-    # sides
-    for j in range(1,lenght-1):
-        graph[(0,j,soil_height)] = [(0,j-1,soil_height),(1,j,soil_height),(0,j+1,soil_height)]
-        graph[(width-1,j,soil_height)] = [(width-1,j-1,soil_height),(width-2,j,soil_height),(width-1,j+1,soil_height)]
-    # sides
-    for i in range(1,width-1):
-        graph[(i,0,soil_height)] = [(i-1,0,soil_height),(i,1,soil_height),(i+1,0,soil_height)]
-        graph[(i,lenght-1,soil_height)] = [(i-1,lenght-1,soil_height),(i,lenght-2,soil_height),(i+1,lenght-1,soil_height)]
-    # corners
-    graph[(0,0,soil_height)] = [(1,0,soil_height),(0,1,soil_height)]
-    graph[(width-1,lenght-1,soil_height)] = [(width-2,lenght-1,soil_height),(width-1,lenght-2,soil_height)]
-    graph[(width-1,0,soil_height)] = [(width-2,0,soil_height),(width-1,1,soil_height)]
-    graph[(0,lenght-1,soil_height)] = [(0,lenght-2,soil_height),(1,lenght-1,soil_height)]
-    # return
-    return graph
 
 # get neighbours of some voxel given current graph
 def get_neighbours(pos, graph):
@@ -331,7 +329,7 @@ def get_neighbours(pos, graph):
             neighbours.append(new_pos)
     return neighbours
 
-# update graph
+# update surface graph
 def update_surface_function(surface, type, pos, world):
     """
     Updates the surface graph based on a specific action type.
@@ -389,6 +387,50 @@ def update_surface_function(surface, type, pos, world):
     # case 3
     else:
         raise ValueError('type not in pickup, drop')
+
+# update structure graph
+def update_structure_function(structure, type, pos, material=None):
+    """
+    Updates the structure graph based on a specific action type.
+    Does not seem to be optimizable.
+
+    Parameters:
+    - structure: Surface object.
+    - type: Type of action ('pickup' or 'drop').
+    - pos: Position in the world of agent.
+    - material: The picked up material if any
+    """
+    # position and vertex
+    x,y,z = pos
+    vertex = (x,y,z)
+
+    # case 1
+    if type == 'pickup':
+        new_vertex = (x,y,z-1)
+        # check if material is 2
+        if material == 2:
+            # remove vertex including all it's edges
+            structure.graph.remove_vertex(new_vertex)
+
+    # case 2
+    elif type == 'drop':
+        # add vertex to graph and connect it accordingly
+        structure.graph[vertex] = []
+        # loop over neighbour directions
+        for dir in neighbour_directions:
+            # the neighbour (supposedly)
+            new_vertex = (x+dir[0],y+dir[1],z+dir[2])
+            # check if it is in structure graph
+            if new_vertex in structure.graph:
+                # if so, add the edge
+                structure.graph.add_edge((vertex, new_vertex))
+
+    # case 3
+    else:
+        raise ValueError('type not in pickup, drop')
+
+# ------------ Random Sampling ---------------
+# --------------------------------------------
 
 # random choices function
 def random_choices(ls, size=1, p=None):
@@ -576,4 +618,3 @@ def cross_entropy(p_emp, p_stat, epsilon=1e-15):
     p_emp = np.clip(p_emp, epsilon, 1 - epsilon)  # Clip probabilities to avoid log(0)
     p_stat = np.clip(p_stat, epsilon, 1 - epsilon)  # Clip probabilities to avoid log(0)
     return -np.sum(p_emp * np.log(p_stat))
-
